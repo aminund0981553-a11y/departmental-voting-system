@@ -1,11 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { useState } from "react";
+import { Download } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { downloadCSV } from "@/lib/export-utils";
 
 export const Route = createFileRoute("/_authenticated/admin/voters")({
   component: () => {
@@ -24,7 +27,19 @@ export const Route = createFileRoute("/_authenticated/admin/voters")({
       <AppShell variant="admin">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold">Registered voters ({data?.length ?? 0})</h1>
-          <Input placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} className="w-72" />
+          <div className="flex gap-2">
+            <Input placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} className="w-64" />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => downloadCSV("voters.csv", filtered.map((p) => ({
+                full_name: p.full_name, reg_number: p.reg_number, department: p.department,
+                level: p.level, phone: p.phone, joined: p.created_at,
+              })))}
+            >
+              <Download className="mr-1 h-4 w-4" /> Export CSV
+            </Button>
+          </div>
         </div>
         <Card>
           <CardContent className="p-0">

@@ -1,12 +1,14 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Trophy } from "lucide-react";
+import { ArrowLeft, Trophy, FileDown, FileSpreadsheet } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { downloadCSV, downloadResultsPDF } from "@/lib/export-utils";
 
 export const Route = createFileRoute("/results/$id")({
   head: () => ({
@@ -49,7 +51,44 @@ function ResultsPage() {
             <h1 className="text-3xl font-bold">{election.title}</h1>
             <p className="mt-1 text-muted-foreground">Total ballots cast: <strong>{votes.length}</strong></p>
           </div>
-          <Badge>{election.results_published ? "Published" : election.status}</Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge>{election.results_published ? "Published" : election.status}</Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const rows = positions.flatMap((p) =>
+                  candidates.filter((c) => c.position_id === p.id).map((c) => ({
+                    position: p.title,
+                    candidate: c.full_name,
+                    votes: votes.filter((v) => v.candidate_id === c.id).length,
+                  })),
+                );
+                downloadCSV(`results-${election.title.replace(/\s+/g, "_")}.csv`, rows);
+              }}
+            >
+              <FileSpreadsheet className="mr-1 h-4 w-4" /> CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => downloadResultsPDF({
+                filename: `results-${election.title.replace(/\s+/g, "_")}.pdf`,
+                title: election.title,
+                subtitle: "Departmental Election Results",
+                totalVotes: votes.length,
+                sections: positions.map((p) => ({
+                  position: p.title,
+                  rows: candidates.filter((c) => c.position_id === p.id).map((c) => ({
+                    name: c.full_name,
+                    votes: votes.filter((v) => v.candidate_id === c.id).length,
+                  })).sort((a, b) => b.votes - a.votes),
+                })),
+              })}
+            >
+              <FileDown className="mr-1 h-4 w-4" /> PDF
+            </Button>
+          </div>
         </div>
 
         <div className="mt-8 space-y-6">

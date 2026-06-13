@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { Download } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { downloadCSV } from "@/lib/export-utils";
 
 export const Route = createFileRoute("/_authenticated/admin/audit")({
   component: () => {
@@ -17,7 +20,18 @@ export const Route = createFileRoute("/_authenticated/admin/audit")({
     });
     return (
       <AppShell variant="admin">
-        <h1 className="mb-6 text-2xl font-bold">Audit log</h1>
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Audit log</h1>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => downloadCSV("audit-log.csv", (data ?? []).map((a) => ({
+              when: a.created_at, user_id: a.user_id, action: a.action, metadata: JSON.stringify(a.metadata),
+            })))}
+          >
+            <Download className="mr-1 h-4 w-4" /> Export CSV
+          </Button>
+        </div>
         <Card>
           <CardContent className="p-0">
             <table className="w-full text-sm">

@@ -3,6 +3,7 @@ import { Vote, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const links = [
   { to: "/", label: "Home" },
@@ -47,6 +48,7 @@ export function SiteNav() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
+          <ThemeToggle />
           {user ? (
             <>
               {isAdmin && (
