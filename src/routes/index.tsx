@@ -221,7 +221,7 @@ function Landing() {
               <Button asChild size="lg" variant="secondary">
                 <Link to="/auth" search={{ mode: "signup" }}>Create account</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/30 bg-transparent text-primary-foreground hover:bg-white/10">
+              <Button asChild size="lg" variant="outline" className="border-white/40 bg-white/10 text-primary-foreground hover:bg-white/20 hover:text-primary-foreground">
                 <Link to="/elections">Browse elections</Link>
               </Button>
             </div>
