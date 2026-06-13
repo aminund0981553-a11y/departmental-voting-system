@@ -179,7 +179,7 @@ function Landing() {
               { n: "04", t: "Receipt", d: "Get a cryptographic receipt to verify your vote was recorded." },
             ].map((s) => (
               <Card key={s.n} className="relative overflow-hidden">
-                <div className="absolute -right-2 -top-4 text-7xl font-black text-muted/60">{s.n}</div>
+                <div className="absolute -right-2 -top-4 text-7xl font-black text-primary/15 dark:text-primary/25">{s.n}</div>
                 <CardHeader><CardTitle className="text-lg">{s.t}</CardTitle></CardHeader>
                 <CardContent className="text-sm text-muted-foreground">{s.d}</CardContent>
               </Card>
