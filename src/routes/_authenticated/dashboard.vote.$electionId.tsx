@@ -2,7 +2,8 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, ShieldCheck, ArrowLeft } from "lucide-react";
+import { CheckCircle2, ShieldCheck, ArrowLeft, Download } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -11,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { downloadCSV } from "@/lib/export-utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard/vote/$electionId")({
   component: VoteFlow,
@@ -89,10 +91,25 @@ function VoteFlow() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">Keep these receipts to verify your vote:</p>
-            <ul className="mt-3 space-y-1 rounded-md bg-muted p-3 font-mono text-xs">
-              {receipts.map((r) => <li key={r}>{r}</li>)}
-            </ul>
-            <Button asChild className="mt-6"><Link to="/dashboard">Back to dashboard</Link></Button>
+            <div className="mt-3 space-y-3">
+              {receipts.map((r) => (
+                <div key={r} className="flex items-center gap-3 rounded-md border bg-muted/40 p-3">
+                  <div className="rounded bg-background p-1">
+                    <QRCodeSVG value={r} size={64} />
+                  </div>
+                  <code className="break-all text-xs">{r}</code>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 flex gap-2">
+              <Button asChild><Link to="/dashboard">Back to dashboard</Link></Button>
+              <Button
+                variant="outline"
+                onClick={() => downloadCSV(`vote-receipts-${electionId}.csv`, receipts.map((r) => ({ receipt: r, election_id: electionId })))}
+              >
+                <Download className="mr-1 h-4 w-4" /> Download receipts
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </AppShell>
