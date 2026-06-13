@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Upload } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { parseCSV } from "@/lib/export-utils";
 
 export const Route = createFileRoute("/_authenticated/admin/candidates")({
   component: AdminCandidates,
@@ -75,6 +76,32 @@ function AdminCandidates() {
 
   const elections = data?.elections ?? [];
   const filteredPositions = (data?.positions ?? []).filter((p) => !electionId || p.election_id === electionId);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleCsvImport(file: File) {
+    if (!electionId) { toast.error("Choose an election first to import into."); return; }
+    try {
+      const rows = await parseCSV<{ position_title?: string; full_name?: string; manifesto?: string }>(file);
+      const positionsForElection = (data?.positions ?? []).filter((p) => p.election_id === electionId);
+      const toInsert: { position_id: string; full_name: string; manifesto: string | null; approved: boolean }[] = [];
+      const unknown: string[] = [];
+      for (const r of rows) {
+        const title = (r.position_title ?? "").trim();
+        const name = (r.full_name ?? "").trim();
+        if (!title || !name) continue;
+        const pos = positionsForElection.find((p) => p.title.toLowerCase() === title.toLowerCase());
+        if (!pos) { unknown.push(title); continue; }
+        toInsert.push({ position_id: pos.id, full_name: name, manifesto: r.manifesto?.trim() || null, approved: true });
+      }
+      if (!toInsert.length) { toast.error("No valid rows found."); return; }
+      const { error } = await supabase.from("candidates").insert(toInsert);
+      if (error) throw error;
+      qc.invalidateQueries();
+      toast.success(`Imported ${toInsert.length} candidate(s)${unknown.length ? `; skipped unknown positions: ${[...new Set(unknown)].join(", ")}` : ""}`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Import failed");
+    }
+  }
 
   return (
     <AppShell variant="admin">
@@ -128,6 +155,10 @@ function AdminCandidates() {
               </form>
             </DialogContent>
           </Dialog>
+          <Button variant="outline" onClick={() => fileRef.current?.click()} title="CSV with columns: position_title, full_name, manifesto">
+            <Upload className="mr-2 h-4 w-4" /> Import CSV
+          </Button>
+          <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCsvImport(f); e.target.value = ""; }} />
         </div>
       </div>
 
