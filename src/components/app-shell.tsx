@@ -7,6 +7,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const studentNav = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -83,6 +84,7 @@ export function AppShell({ children, variant }: { children: ReactNode; variant: 
         <header className="flex h-16 items-center justify-between border-b border-border bg-background px-4 md:px-8">
           <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-foreground">← Back to site</Link>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Button asChild variant="ghost" size="sm" className="md:hidden">
               <Link to="/dashboard/profile"><Settings className="h-4 w-4" /></Link>
             </Button>
