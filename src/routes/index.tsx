@@ -72,8 +72,7 @@ function Landing() {
               <Button asChild size="lg" variant="secondary">
                 <Link to="/auth" search={{ mode: "signup" }}>Register to Vote</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/40 bg-white/10 text-primary-foreground hover:bg-white/20 hover:text-primary-foreground">
-
+              <Button asChild size="lg" variant="outline" className="border-white bg-white/15 text-white hover:bg-white hover:text-primary">
                 <Link to="/elections">View Elections</Link>
               </Button>
             </div>
