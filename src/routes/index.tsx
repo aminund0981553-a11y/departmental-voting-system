@@ -208,11 +208,11 @@ function Landing() {
 
       {/* CTA */}
       <section id="contact" className="mx-auto max-w-6xl px-4 pb-20">
-        <div className="rounded-2xl gradient-navy p-10 text-primary-foreground md:p-14">
+        <div className="rounded-2xl gradient-navy p-10 text-white md:p-14">
           <div className="grid items-center gap-6 md:grid-cols-[2fr_1fr]">
             <div>
-              <h2 className="text-3xl font-bold md:text-4xl">Ready to make your voice count?</h2>
-              <p className="mt-3 text-primary-foreground/80">
+              <h2 className="text-3xl font-bold md:text-4xl text-white">Ready to make your voice count?</h2>
+              <p className="mt-3 text-white/85">
                 Register today and cast your ballot in the next departmental election.
               </p>
             </div>
