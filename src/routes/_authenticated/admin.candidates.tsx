@@ -53,7 +53,7 @@ function AdminCandidates() {
     mutationFn: async (form: any) => {
       const { error } = await supabase.from("candidates").insert({
         position_id: form.position_id, full_name: form.full_name,
-        manifesto: form.manifesto, approved: true,
+        manifesto: form.manifesto, approved: true, status: "approved",
       });
       if (error) throw error;
     },
@@ -61,8 +61,27 @@ function AdminCandidates() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const approveNomination = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("candidates").update({ approved: true, status: "approved", reject_reason: null }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries(); toast.success("Nomination approved"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const rejectNomination = useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
+      const { error } = await supabase.from("candidates").update({ approved: false, status: "rejected", reject_reason: reason }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries(); toast.success("Nomination rejected"); },
+    onError: (e: any) => toast.error(e.message),
+  });
   const toggleApproval = useMutation({
-    mutationFn: async ({ id, approved }: any) => { const { error } = await supabase.from("candidates").update({ approved }).eq("id", id); if (error) throw error; },
+    mutationFn: async ({ id, approved }: any) => {
+      const { error } = await supabase.from("candidates").update({ approved, status: approved ? "approved" : "pending" }).eq("id", id);
+      if (error) throw error;
+    },
     onSuccess: () => qc.invalidateQueries(),
   });
   const delCand = useMutation({
