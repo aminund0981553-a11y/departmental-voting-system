@@ -25,6 +25,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedDashboardProfileRouteImport } from './routes/_authenticated/dashboard.profile'
+import { Route as AuthenticatedDashboardNominateRouteImport } from './routes/_authenticated/dashboard.nominate'
 import { Route as AuthenticatedDashboardHistoryRouteImport } from './routes/_authenticated/dashboard.history'
 import { Route as AuthenticatedDashboardElectionsRouteImport } from './routes/_authenticated/dashboard.elections'
 import { Route as AuthenticatedAdminVotersRouteImport } from './routes/_authenticated/admin.voters'
@@ -114,6 +115,12 @@ const AuthenticatedDashboardProfileRoute =
     path: '/profile',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardNominateRoute =
+  AuthenticatedDashboardNominateRouteImport.update({
+    id: '/nominate',
+    path: '/nominate',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardHistoryRoute =
   AuthenticatedDashboardHistoryRouteImport.update({
     id: '/history',
@@ -175,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/admin/voters': typeof AuthenticatedAdminVotersRoute
   '/dashboard/elections': typeof AuthenticatedDashboardElectionsRoute
   '/dashboard/history': typeof AuthenticatedDashboardHistoryRoute
+  '/dashboard/nominate': typeof AuthenticatedDashboardNominateRoute
   '/dashboard/profile': typeof AuthenticatedDashboardProfileRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
@@ -197,6 +205,7 @@ export interface FileRoutesByTo {
   '/admin/voters': typeof AuthenticatedAdminVotersRoute
   '/dashboard/elections': typeof AuthenticatedDashboardElectionsRoute
   '/dashboard/history': typeof AuthenticatedDashboardHistoryRoute
+  '/dashboard/nominate': typeof AuthenticatedDashboardNominateRoute
   '/dashboard/profile': typeof AuthenticatedDashboardProfileRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
@@ -223,6 +232,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/voters': typeof AuthenticatedAdminVotersRoute
   '/_authenticated/dashboard/elections': typeof AuthenticatedDashboardElectionsRoute
   '/_authenticated/dashboard/history': typeof AuthenticatedDashboardHistoryRoute
+  '/_authenticated/dashboard/nominate': typeof AuthenticatedDashboardNominateRoute
   '/_authenticated/dashboard/profile': typeof AuthenticatedDashboardProfileRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/admin/voters'
     | '/dashboard/elections'
     | '/dashboard/history'
+    | '/dashboard/nominate'
     | '/dashboard/profile'
     | '/admin/'
     | '/dashboard/'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/admin/voters'
     | '/dashboard/elections'
     | '/dashboard/history'
+    | '/dashboard/nominate'
     | '/dashboard/profile'
     | '/admin'
     | '/dashboard'
@@ -296,6 +308,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/voters'
     | '/_authenticated/dashboard/elections'
     | '/_authenticated/dashboard/history'
+    | '/_authenticated/dashboard/nominate'
     | '/_authenticated/dashboard/profile'
     | '/_authenticated/admin/'
     | '/_authenticated/dashboard/'
@@ -428,6 +441,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardProfileRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/nominate': {
+      id: '/_authenticated/dashboard/nominate'
+      path: '/nominate'
+      fullPath: '/dashboard/nominate'
+      preLoaderRoute: typeof AuthenticatedDashboardNominateRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/history': {
       id: '/_authenticated/dashboard/history'
       path: '/history'
@@ -502,6 +522,7 @@ const AuthenticatedAdminRouteWithChildren =
 interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardElectionsRoute: typeof AuthenticatedDashboardElectionsRoute
   AuthenticatedDashboardHistoryRoute: typeof AuthenticatedDashboardHistoryRoute
+  AuthenticatedDashboardNominateRoute: typeof AuthenticatedDashboardNominateRoute
   AuthenticatedDashboardProfileRoute: typeof AuthenticatedDashboardProfileRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
   AuthenticatedDashboardVoteElectionIdRoute: typeof AuthenticatedDashboardVoteElectionIdRoute
@@ -511,6 +532,7 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
   {
     AuthenticatedDashboardElectionsRoute: AuthenticatedDashboardElectionsRoute,
     AuthenticatedDashboardHistoryRoute: AuthenticatedDashboardHistoryRoute,
+    AuthenticatedDashboardNominateRoute: AuthenticatedDashboardNominateRoute,
     AuthenticatedDashboardProfileRoute: AuthenticatedDashboardProfileRoute,
     AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
     AuthenticatedDashboardVoteElectionIdRoute:

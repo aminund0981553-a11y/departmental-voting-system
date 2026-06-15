@@ -47,6 +47,10 @@ export type Database = {
           manifesto: string | null
           photo_url: string | null
           position_id: string
+          reject_reason: string | null
+          status: string
+          submitted_at: string
+          user_id: string | null
         }
         Insert: {
           approved?: boolean
@@ -56,6 +60,10 @@ export type Database = {
           manifesto?: string | null
           photo_url?: string | null
           position_id: string
+          reject_reason?: string | null
+          status?: string
+          submitted_at?: string
+          user_id?: string | null
         }
         Update: {
           approved?: boolean
@@ -65,6 +73,10 @@ export type Database = {
           manifesto?: string | null
           photo_url?: string | null
           position_id?: string
+          reject_reason?: string | null
+          status?: string
+          submitted_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {

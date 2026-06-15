@@ -53,7 +53,7 @@ function AdminCandidates() {
     mutationFn: async (form: any) => {
       const { error } = await supabase.from("candidates").insert({
         position_id: form.position_id, full_name: form.full_name,
-        manifesto: form.manifesto, approved: true,
+        manifesto: form.manifesto, approved: true, status: "approved",
       });
       if (error) throw error;
     },
@@ -61,8 +61,27 @@ function AdminCandidates() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const approveNomination = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("candidates").update({ approved: true, status: "approved", reject_reason: null }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries(); toast.success("Nomination approved"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const rejectNomination = useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
+      const { error } = await supabase.from("candidates").update({ approved: false, status: "rejected", reject_reason: reason }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries(); toast.success("Nomination rejected"); },
+    onError: (e: any) => toast.error(e.message),
+  });
   const toggleApproval = useMutation({
-    mutationFn: async ({ id, approved }: any) => { const { error } = await supabase.from("candidates").update({ approved }).eq("id", id); if (error) throw error; },
+    mutationFn: async ({ id, approved }: any) => {
+      const { error } = await supabase.from("candidates").update({ approved, status: approved ? "approved" : "pending" }).eq("id", id);
+      if (error) throw error;
+    },
     onSuccess: () => qc.invalidateQueries(),
   });
   const delCand = useMutation({
@@ -162,10 +181,54 @@ function AdminCandidates() {
         </div>
       </div>
 
+      {(() => {
+        const pending = (data?.candidates ?? []).filter((c) =>
+          c.status === "pending" &&
+          (!electionId || (data?.positions ?? []).find((p) => p.id === c.position_id)?.election_id === electionId)
+        );
+        if (pending.length === 0) return null;
+        return (
+          <Card className="mb-6 border-amber-500/40">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                Pending nominations <Badge variant="secondary">{pending.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {pending.map((c) => {
+                const pos = (data?.positions ?? []).find((p) => p.id === c.position_id);
+                const el = elections.find((e) => e.id === pos?.election_id);
+                return (
+                  <div key={c.id} className="rounded-lg border p-3">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="font-medium">{c.full_name}</div>
+                        <div className="text-xs text-muted-foreground">{el?.title} — {pos?.title}</div>
+                        {c.manifesto && <p className="mt-2 text-sm">{c.manifesto}</p>}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => approveNomination.mutate(c.id)}>Approve</Button>
+                        <Button size="sm" variant="outline" onClick={() => {
+                          const reason = prompt("Reason for rejection (shown to applicant):") ?? "";
+                          if (reason.trim()) rejectNomination.mutate({ id: c.id, reason: reason.trim() });
+                        }}>Reject</Button>
+                        <Button size="sm" variant="ghost" onClick={() => { if (confirm("Delete nomination?")) delCand.mutate(c.id); }}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       <div className="space-y-6">
         {filteredPositions.map((p) => {
           const el = elections.find((e) => e.id === p.election_id);
-          const cands = (data?.candidates ?? []).filter((c) => c.position_id === p.id);
+          const cands = (data?.candidates ?? []).filter((c) => c.position_id === p.id && c.status !== "pending");
           return (
             <Card key={p.id}>
               <CardHeader>

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import {
   LayoutDashboard, Vote, History, User, LogOut, Settings,
-  ShieldCheck, Users, CalendarRange, Trophy, ScrollText,
+  ShieldCheck, Users, CalendarRange, Trophy, ScrollText, UserPlus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -12,6 +12,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 const studentNav = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { to: "/dashboard/elections", label: "Vote", icon: Vote },
+  { to: "/dashboard/nominate", label: "Run for Office", icon: UserPlus },
   { to: "/dashboard/history", label: "My Votes", icon: History },
   { to: "/dashboard/profile", label: "Profile", icon: User },
 ] as const;
