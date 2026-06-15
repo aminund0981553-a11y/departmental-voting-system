@@ -53,30 +53,30 @@ function Landing() {
 
       {/* HERO */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 gradient-navy" />
+        <div className="absolute inset-0 -z-10 bg-background dark:bg-transparent dark:gradient-navy" />
         <div className="absolute inset-0 -z-10 opacity-30"
           style={{ backgroundImage: "radial-gradient(circle at 20% 20%, oklch(0.78 0.05 245 / 0.4), transparent 50%), radial-gradient(circle at 80% 60%, oklch(0.55 0.1 230 / 0.3), transparent 50%)" }} />
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 text-white md:grid-cols-2 md:py-28">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 text-primary dark:text-white md:grid-cols-2 md:py-28">
           <div className="flex flex-col justify-center">
-            <Badge variant="secondary" className="mb-5 w-fit bg-white/15 text-white hover:bg-white/25">
+            <Badge variant="secondary" className="mb-5 w-fit bg-primary/10 text-primary hover:bg-primary/15 dark:bg-white/15 dark:text-white dark:hover:bg-white/25">
               Gombe State University · Computer Science
             </Badge>
-            <h1 className="text-4xl font-bold leading-tight md:text-6xl text-white">
+            <h1 className="text-4xl font-bold leading-tight md:text-6xl text-primary dark:text-white">
               Secure Online Voting for Departmental Elections
             </h1>
-            <p className="mt-5 max-w-xl text-lg text-white/85">
+            <p className="mt-5 max-w-xl text-lg text-primary/80 dark:text-white/85">
               Cast your vote from anywhere, in seconds. Encrypted ballots, real-time
               results, full audit trail — built for the Department of Computer Science.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild size="lg" variant="secondary">
+              <Button asChild size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-white dark:text-primary dark:hover:bg-white/90">
                 <Link to="/auth" search={{ mode: "signup" }}>Register to Vote</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-white bg-white/15 text-white hover:bg-white hover:text-primary">
+              <Button asChild size="lg" variant="outline" className="border-primary text-primary bg-transparent hover:bg-primary hover:text-primary-foreground dark:border-white dark:text-white dark:bg-white/15 dark:hover:bg-white dark:hover:text-primary">
                 <Link to="/elections">View Elections</Link>
               </Button>
             </div>
-            <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-white/75">
+            <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-primary/75 dark:text-white/75">
               <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> End-to-end secured</span>
               <span className="flex items-center gap-2"><Fingerprint className="h-4 w-4" /> One voter, one vote</span>
               <span className="flex items-center gap-2"><Eye className="h-4 w-4" /> Public results</span>
