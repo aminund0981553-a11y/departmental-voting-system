@@ -109,10 +109,10 @@ function AdminCandidates() {
         <h1 className="text-2xl font-bold">Positions & Candidates</h1>
         <div className="flex flex-wrap gap-2">
           <div className="w-64">
-            <Select value={electionId} onValueChange={setElectionId}>
+            <Select value={electionId || "all"} onValueChange={(v) => setElectionId(v === "all" ? "" : v)}>
               <SelectTrigger><SelectValue placeholder="Filter by election" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All elections</SelectItem>
+                <SelectItem value="all">All elections</SelectItem>
                 {elections.map((e) => <SelectItem key={e.id} value={e.id}>{e.title}</SelectItem>)}
               </SelectContent>
             </Select>
