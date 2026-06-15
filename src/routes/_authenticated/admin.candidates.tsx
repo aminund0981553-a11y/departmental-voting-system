@@ -228,7 +228,7 @@ function AdminCandidates() {
       <div className="space-y-6">
         {filteredPositions.map((p) => {
           const el = elections.find((e) => e.id === p.election_id);
-          const cands = (data?.candidates ?? []).filter((c) => c.position_id === p.id);
+          const cands = (data?.candidates ?? []).filter((c) => c.position_id === p.id && c.status !== "pending");
           return (
             <Card key={p.id}>
               <CardHeader>
