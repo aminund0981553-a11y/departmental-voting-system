@@ -56,15 +56,15 @@ function Landing() {
         <div className="absolute inset-0 -z-10 gradient-navy" />
         <div className="absolute inset-0 -z-10 opacity-30"
           style={{ backgroundImage: "radial-gradient(circle at 20% 20%, oklch(0.78 0.05 245 / 0.4), transparent 50%), radial-gradient(circle at 80% 60%, oklch(0.55 0.1 230 / 0.3), transparent 50%)" }} />
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 text-primary-foreground md:grid-cols-2 md:py-28">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 text-white md:grid-cols-2 md:py-28">
           <div className="flex flex-col justify-center">
-            <Badge variant="secondary" className="mb-5 w-fit bg-white/10 text-primary-foreground hover:bg-white/15">
+            <Badge variant="secondary" className="mb-5 w-fit bg-white/15 text-white hover:bg-white/25">
               Gombe State University · Computer Science
             </Badge>
-            <h1 className="text-4xl font-bold leading-tight md:text-6xl">
+            <h1 className="text-4xl font-bold leading-tight md:text-6xl text-white">
               Secure Online Voting for Departmental Elections
             </h1>
-            <p className="mt-5 max-w-xl text-lg text-primary-foreground/80">
+            <p className="mt-5 max-w-xl text-lg text-white/85">
               Cast your vote from anywhere, in seconds. Encrypted ballots, real-time
               results, full audit trail — built for the Department of Computer Science.
             </p>
@@ -72,12 +72,11 @@ function Landing() {
               <Button asChild size="lg" variant="secondary">
                 <Link to="/auth" search={{ mode: "signup" }}>Register to Vote</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/40 bg-white/10 text-primary-foreground hover:bg-white/20 hover:text-primary-foreground">
-
+              <Button asChild size="lg" variant="outline" className="border-white bg-white/15 text-white hover:bg-white hover:text-primary">
                 <Link to="/elections">View Elections</Link>
               </Button>
             </div>
-            <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-primary-foreground/70">
+            <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-white/75">
               <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> End-to-end secured</span>
               <span className="flex items-center gap-2"><Fingerprint className="h-4 w-4" /> One voter, one vote</span>
               <span className="flex items-center gap-2"><Eye className="h-4 w-4" /> Public results</span>
@@ -179,7 +178,7 @@ function Landing() {
               { n: "04", t: "Receipt", d: "Get a cryptographic receipt to verify your vote was recorded." },
             ].map((s) => (
               <Card key={s.n} className="relative overflow-hidden">
-                <div className="absolute -right-2 -top-4 text-7xl font-black text-primary/15 dark:text-primary/25">{s.n}</div>
+                <div className="absolute -right-2 -top-4 text-7xl font-black text-primary/30 dark:text-primary/40">{s.n}</div>
                 <CardHeader><CardTitle className="text-lg">{s.t}</CardTitle></CardHeader>
                 <CardContent className="text-sm text-muted-foreground">{s.d}</CardContent>
               </Card>
@@ -209,11 +208,11 @@ function Landing() {
 
       {/* CTA */}
       <section id="contact" className="mx-auto max-w-6xl px-4 pb-20">
-        <div className="rounded-2xl gradient-navy p-10 text-primary-foreground md:p-14">
+        <div className="rounded-2xl gradient-navy p-10 text-white md:p-14">
           <div className="grid items-center gap-6 md:grid-cols-[2fr_1fr]">
             <div>
-              <h2 className="text-3xl font-bold md:text-4xl">Ready to make your voice count?</h2>
-              <p className="mt-3 text-primary-foreground/80">
+              <h2 className="text-3xl font-bold md:text-4xl text-white">Ready to make your voice count?</h2>
+              <p className="mt-3 text-white/85">
                 Register today and cast your ballot in the next departmental election.
               </p>
             </div>
@@ -221,7 +220,7 @@ function Landing() {
               <Button asChild size="lg" variant="secondary">
                 <Link to="/auth" search={{ mode: "signup" }}>Create account</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/40 bg-white/10 text-primary-foreground hover:bg-white/20 hover:text-primary-foreground">
+              <Button asChild size="lg" variant="outline" className="border-white bg-white/15 text-white hover:bg-white hover:text-primary">
                 <Link to="/elections">Browse elections</Link>
               </Button>
             </div>
