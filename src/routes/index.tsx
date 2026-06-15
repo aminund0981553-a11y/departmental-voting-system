@@ -56,15 +56,15 @@ function Landing() {
         <div className="absolute inset-0 -z-10 gradient-navy" />
         <div className="absolute inset-0 -z-10 opacity-30"
           style={{ backgroundImage: "radial-gradient(circle at 20% 20%, oklch(0.78 0.05 245 / 0.4), transparent 50%), radial-gradient(circle at 80% 60%, oklch(0.55 0.1 230 / 0.3), transparent 50%)" }} />
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 text-primary-foreground md:grid-cols-2 md:py-28">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 text-white md:grid-cols-2 md:py-28">
           <div className="flex flex-col justify-center">
-            <Badge variant="secondary" className="mb-5 w-fit bg-white/10 text-primary-foreground hover:bg-white/15">
+            <Badge variant="secondary" className="mb-5 w-fit bg-white/15 text-white hover:bg-white/25">
               Gombe State University · Computer Science
             </Badge>
-            <h1 className="text-4xl font-bold leading-tight md:text-6xl">
+            <h1 className="text-4xl font-bold leading-tight md:text-6xl text-white">
               Secure Online Voting for Departmental Elections
             </h1>
-            <p className="mt-5 max-w-xl text-lg text-primary-foreground/80">
+            <p className="mt-5 max-w-xl text-lg text-white/85">
               Cast your vote from anywhere, in seconds. Encrypted ballots, real-time
               results, full audit trail — built for the Department of Computer Science.
             </p>
@@ -76,7 +76,7 @@ function Landing() {
                 <Link to="/elections">View Elections</Link>
               </Button>
             </div>
-            <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-primary-foreground/70">
+            <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-white/75">
               <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> End-to-end secured</span>
               <span className="flex items-center gap-2"><Fingerprint className="h-4 w-4" /> One voter, one vote</span>
               <span className="flex items-center gap-2"><Eye className="h-4 w-4" /> Public results</span>
