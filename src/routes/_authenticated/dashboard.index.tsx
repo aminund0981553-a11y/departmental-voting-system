@@ -36,6 +36,7 @@ function Dashboard() {
   const nominations = data?.nominations ?? [];
   const positions = data?.positions ?? [];
   const elections = data?.elections ?? [];
+  const myVotedElections = new Set((data?.myVotes ?? []).map((v) => v.election_id));
 
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   useEffect(() => {
