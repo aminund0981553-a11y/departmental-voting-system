@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { Vote, CheckCircle2, Clock, History } from "lucide-react";
+import { Vote, CheckCircle2, Clock, History, X } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,17 +22,35 @@ function Dashboard() {
     queryKey: ["student-overview", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const [{ data: elections }, { data: myVotes }, { data: profile }] = await Promise.all([
+      const [{ data: elections }, { data: myVotes }, { data: profile }, { data: nominations }, { data: positions }] = await Promise.all([
         supabase.from("elections").select("*").in("status", ["active", "scheduled"]).order("starts_at"),
         supabase.from("votes").select("election_id").eq("voter_id", user!.id),
         supabase.from("profiles").select("*").eq("id", user!.id).maybeSingle(),
+        supabase.from("candidates").select("*").eq("user_id", user!.id).in("status", ["approved", "rejected"]),
+        supabase.from("positions").select("id,title,election_id"),
       ]);
-      return { elections: elections ?? [], myVotes: myVotes ?? [], profile };
+      return { elections: elections ?? [], myVotes: myVotes ?? [], profile, nominations: nominations ?? [], positions: positions ?? [] };
     },
   });
 
+  const nominations = data?.nominations ?? [];
+  const positions = data?.positions ?? [];
   const elections = data?.elections ?? [];
   const myVotedElections = new Set((data?.myVotes ?? []).map((v) => v.election_id));
+
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(`nom-seen-${user?.id}`);
+      if (raw) setDismissed(new Set(JSON.parse(raw)));
+    } catch {}
+  }, [user?.id]);
+  const dismiss = (id: string) => {
+    const next = new Set(dismissed); next.add(id);
+    setDismissed(next);
+    try { localStorage.setItem(`nom-seen-${user?.id}`, JSON.stringify([...next])); } catch {}
+  };
+  const visibleNominations = nominations.filter((n) => !dismissed.has(n.id));
 
   return (
     <AppShell variant="student">
@@ -39,6 +58,38 @@ function Dashboard() {
         <h1 className="text-2xl font-bold">Welcome back{data?.profile?.full_name ? `, ${data.profile.full_name}` : ""}</h1>
         <p className="text-muted-foreground">Here's what's happening in your department.</p>
       </div>
+
+      {visibleNominations.length > 0 && (
+        <div className="mb-6 space-y-3">
+          {visibleNominations.map((n) => {
+            const pos = positions.find((p) => p.id === n.position_id);
+            const approved = n.status === "approved";
+            return (
+              <Card key={n.id} className={approved ? "border-success/40 bg-success/5" : "border-destructive/40 bg-destructive/5"}>
+                <CardContent className="flex items-start justify-between gap-3 p-4">
+                  <div className="min-w-0">
+                    <div className="font-semibold">
+                      {approved ? "🎉 Your nomination was approved" : "Your nomination was not approved"}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {pos?.title ?? "Position"}
+                    </div>
+                    {!approved && n.reject_reason && (
+                      <p className="mt-1 text-sm"><span className="font-medium">Reason:</span> {n.reject_reason}</p>
+                    )}
+                    {approved && <p className="mt-1 text-sm">You'll appear on the ballot when voting opens.</p>}
+                  </div>
+                  <Button size="icon" variant="ghost" onClick={() => dismiss(n.id)} aria-label="Dismiss">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+
 
       <div className="grid gap-4 md:grid-cols-3">
         {[
