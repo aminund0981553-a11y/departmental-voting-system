@@ -21,12 +21,14 @@ function Dashboard() {
     queryKey: ["student-overview", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const [{ data: elections }, { data: myVotes }, { data: profile }] = await Promise.all([
+      const [{ data: elections }, { data: myVotes }, { data: profile }, { data: nominations }, { data: positions }] = await Promise.all([
         supabase.from("elections").select("*").in("status", ["active", "scheduled"]).order("starts_at"),
         supabase.from("votes").select("election_id").eq("voter_id", user!.id),
         supabase.from("profiles").select("*").eq("id", user!.id).maybeSingle(),
+        supabase.from("candidates").select("*").eq("user_id", user!.id).in("status", ["approved", "rejected"]),
+        supabase.from("positions").select("id,title,election_id"),
       ]);
-      return { elections: elections ?? [], myVotes: myVotes ?? [], profile };
+      return { elections: elections ?? [], myVotes: myVotes ?? [], profile, nominations: nominations ?? [], positions: positions ?? [] };
     },
   });
 
