@@ -56,7 +56,7 @@ function ResultsPage() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold">{election.title}</h1>
-            <p className="mt-1 text-muted-foreground">Total ballots cast: <strong>{votes.length}</strong></p>
+            <p className="mt-1 text-muted-foreground">Total ballots cast: <strong>{totalVotes}</strong></p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge>{election.results_published ? "Published" : election.status}</Badge>
@@ -68,7 +68,7 @@ function ResultsPage() {
                   candidates.filter((c) => c.position_id === p.id).map((c) => ({
                     position: p.title,
                     candidate: c.full_name,
-                    votes: votes.filter((v) => v.candidate_id === c.id).length,
+                    votes: voteCount(c.id),
                   })),
                 );
                 downloadCSV(`results-${election.title.replace(/\s+/g, "_")}.csv`, rows);
@@ -83,12 +83,12 @@ function ResultsPage() {
                 filename: `results-${election.title.replace(/\s+/g, "_")}.pdf`,
                 title: election.title,
                 subtitle: "Departmental Election Results",
-                totalVotes: votes.length,
+                totalVotes: totalVotes,
                 sections: positions.map((p) => ({
                   position: p.title,
                   rows: candidates.filter((c) => c.position_id === p.id).map((c) => ({
                     name: c.full_name,
-                    votes: votes.filter((v) => v.candidate_id === c.id).length,
+                    votes: voteCount(c.id),
                   })).sort((a, b) => b.votes - a.votes),
                 })),
               })}
@@ -103,7 +103,7 @@ function ResultsPage() {
             const posCandidates = candidates.filter((c) => c.position_id === p.id);
             const rows = posCandidates.map((c) => ({
               name: c.full_name,
-              votes: votes.filter((v) => v.candidate_id === c.id).length,
+              votes: voteCount(c.id),
             })).sort((a, b) => b.votes - a.votes);
             const winner = rows[0];
             return (
