@@ -24,20 +24,27 @@ function ResultsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["results", id],
     queryFn: async () => {
-      const [{ data: election }, { data: positions }, { data: candidates }, { data: votes }] = await Promise.all([
+      const [{ data: election }, { data: positions }, { data: candidates }, { data: tallies }] = await Promise.all([
         supabase.from("elections").select("*").eq("id", id).maybeSingle(),
         supabase.from("positions").select("*").eq("election_id", id).order("display_order"),
-        supabase.from("candidates").select("*, positions!inner(election_id)").eq("positions.election_id", id),
-        supabase.from("votes").select("candidate_id,position_id").eq("election_id", id),
+        supabase.from("candidates").select("*, positions!inner(election_id)").eq("positions.election_id", id).eq("approved", true),
+        supabase.rpc("get_election_tallies", { _election_id: id }),
       ]);
       if (!election) throw notFound();
-      return { election, positions: positions ?? [], candidates: candidates ?? [], votes: votes ?? [] };
+      const counts = new Map<string, number>();
+      let total = 0;
+      for (const t of (tallies as any[]) ?? []) {
+        counts.set(t.candidate_id, Number(t.vote_count));
+        total += Number(t.vote_count);
+      }
+      return { election, positions: positions ?? [], candidates: candidates ?? [], counts, totalVotes: total };
     },
     refetchInterval: 5000,
   });
 
   if (isLoading || !data) return <div className="p-10 text-center text-muted-foreground">Loading…</div>;
-  const { election, positions, candidates, votes } = data;
+  const { election, positions, candidates, counts, totalVotes } = data;
+  const voteCount = (cid: string) => counts.get(cid) ?? 0;
 
   return (
     <div>
