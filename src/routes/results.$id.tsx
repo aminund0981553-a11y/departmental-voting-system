@@ -24,20 +24,27 @@ function ResultsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["results", id],
     queryFn: async () => {
-      const [{ data: election }, { data: positions }, { data: candidates }, { data: votes }] = await Promise.all([
+      const [{ data: election }, { data: positions }, { data: candidates }, { data: tallies }] = await Promise.all([
         supabase.from("elections").select("*").eq("id", id).maybeSingle(),
         supabase.from("positions").select("*").eq("election_id", id).order("display_order"),
-        supabase.from("candidates").select("*, positions!inner(election_id)").eq("positions.election_id", id),
-        supabase.from("votes").select("candidate_id,position_id").eq("election_id", id),
+        supabase.from("candidates").select("*, positions!inner(election_id)").eq("positions.election_id", id).eq("approved", true),
+        supabase.rpc("get_election_tallies", { _election_id: id }),
       ]);
       if (!election) throw notFound();
-      return { election, positions: positions ?? [], candidates: candidates ?? [], votes: votes ?? [] };
+      const counts = new Map<string, number>();
+      let total = 0;
+      for (const t of (tallies as any[]) ?? []) {
+        counts.set(t.candidate_id, Number(t.vote_count));
+        total += Number(t.vote_count);
+      }
+      return { election, positions: positions ?? [], candidates: candidates ?? [], counts, totalVotes: total };
     },
     refetchInterval: 5000,
   });
 
   if (isLoading || !data) return <div className="p-10 text-center text-muted-foreground">Loading…</div>;
-  const { election, positions, candidates, votes } = data;
+  const { election, positions, candidates, counts, totalVotes } = data;
+  const voteCount = (cid: string) => counts.get(cid) ?? 0;
 
   return (
     <div>
@@ -49,7 +56,7 @@ function ResultsPage() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold">{election.title}</h1>
-            <p className="mt-1 text-muted-foreground">Total ballots cast: <strong>{votes.length}</strong></p>
+            <p className="mt-1 text-muted-foreground">Total ballots cast: <strong>{totalVotes}</strong></p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge>{election.results_published ? "Published" : election.status}</Badge>
@@ -61,7 +68,7 @@ function ResultsPage() {
                   candidates.filter((c) => c.position_id === p.id).map((c) => ({
                     position: p.title,
                     candidate: c.full_name,
-                    votes: votes.filter((v) => v.candidate_id === c.id).length,
+                    votes: voteCount(c.id),
                   })),
                 );
                 downloadCSV(`results-${election.title.replace(/\s+/g, "_")}.csv`, rows);
@@ -76,12 +83,12 @@ function ResultsPage() {
                 filename: `results-${election.title.replace(/\s+/g, "_")}.pdf`,
                 title: election.title,
                 subtitle: "Departmental Election Results",
-                totalVotes: votes.length,
+                totalVotes: totalVotes,
                 sections: positions.map((p) => ({
                   position: p.title,
                   rows: candidates.filter((c) => c.position_id === p.id).map((c) => ({
                     name: c.full_name,
-                    votes: votes.filter((v) => v.candidate_id === c.id).length,
+                    votes: voteCount(c.id),
                   })).sort((a, b) => b.votes - a.votes),
                 })),
               })}
@@ -96,7 +103,7 @@ function ResultsPage() {
             const posCandidates = candidates.filter((c) => c.position_id === p.id);
             const rows = posCandidates.map((c) => ({
               name: c.full_name,
-              votes: votes.filter((v) => v.candidate_id === c.id).length,
+              votes: voteCount(c.id),
             })).sort((a, b) => b.votes - a.votes);
             const winner = rows[0];
             return (
