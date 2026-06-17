@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { UserPlus, Trash2, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { UserPlus, Trash2, Clock, CheckCircle2, XCircle, Upload, X } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,33 @@ function NominatePage() {
   const [fullName, setFullName] = useState("");
   const [manifesto, setManifesto] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoUpload = async (file: File) => {
+    if (!user) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please choose an image file"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be 5 MB or smaller"); return; }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("candidate-photos")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      const { data: signed, error: signErr } = await supabase.storage
+        .from("candidate-photos")
+        .createSignedUrl(path, 60 * 60 * 24 * 365 * 5); // 5 years
+      if (signErr) throw signErr;
+      setPhotoUrl(signed.signedUrl);
+      toast.success("Photo uploaded");
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const elections = data?.elections ?? [];
   const positionsForElection = (data?.positions ?? []).filter((p) => p.election_id === electionId);
@@ -137,13 +164,38 @@ function NominatePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Photo URL (optional)</Label>
-                  <Input
-                    type="url"
-                    value={photoUrl}
-                    onChange={(e) => setPhotoUrl(e.target.value)}
-                    placeholder="https://..."
+                  <Label>Candidate photo (optional)</Label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handlePhotoUpload(f);
+                      e.target.value = "";
+                    }}
                   />
+                  {photoUrl ? (
+                    <div className="flex items-center gap-3 rounded-md border p-2">
+                      <img src={photoUrl} alt="Candidate preview" className="h-16 w-16 rounded object-cover" />
+                      <div className="flex-1 text-xs text-muted-foreground">Photo uploaded</div>
+                      <Button type="button" size="sm" variant="ghost" onClick={() => setPhotoUrl("")}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      {uploading ? "Uploading..." : "Upload photo"}
+                    </Button>
+                  )}
+                  <p className="text-xs text-muted-foreground">JPG/PNG up to 5 MB.</p>
                 </div>
 
                 <div className="space-y-2">
