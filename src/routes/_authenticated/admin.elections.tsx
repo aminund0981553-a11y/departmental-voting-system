@@ -53,6 +53,35 @@ function AdminElections() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const addPosition = useMutation({
+    mutationFn: async ({ election_id, title }: { election_id: string; title: string }) => {
+      const t = title.trim();
+      if (!t) throw new Error("Position title is required");
+      const existing = (data?.positions ?? []).filter((p) => p.election_id === election_id).length;
+      const { error } = await supabase.from("positions").insert({ election_id, title: t, display_order: existing });
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries(); toast.success("Position added"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const delPosition = useMutation({
+    mutationFn: async (id: string) => { const { error } = await supabase.from("positions").delete().eq("id", id); if (error) throw error; },
+    onSuccess: () => { qc.invalidateQueries(); toast.success("Position removed"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const seedDefaults = useMutation({
+    mutationFn: async (election_id: string) => {
+      const existing = (data?.positions ?? []).filter((p) => p.election_id === election_id).length;
+      const rows = DEFAULT_POSITIONS.map((title, i) => ({ election_id, title, display_order: existing + i }));
+      const { error } = await supabase.from("positions").insert(rows);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries(); toast.success("Default positions added"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const [open, setOpen] = useState(false);
   const create = useMutation({
     mutationFn: async (form: any) => {
