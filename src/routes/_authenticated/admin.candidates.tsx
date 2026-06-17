@@ -27,11 +27,19 @@ function AdminCandidates() {
       const [{ data: elections }, { data: positions }, { data: candidates }] = await Promise.all([
         supabase.from("elections").select("id,title").order("created_at", { ascending: false }),
         supabase.from("positions").select("*").order("display_order"),
-        supabase.from("candidates").select("*"),
+        supabase.from("candidates").select("*").order("submitted_at", { ascending: false, nullsFirst: false }),
       ]);
-      return { elections: elections ?? [], positions: positions ?? [], candidates: candidates ?? [] };
+      const userIds = Array.from(new Set((candidates ?? []).map((c: any) => c.user_id).filter(Boolean)));
+      let profiles: any[] = [];
+      if (userIds.length) {
+        const { data: ps } = await supabase.from("profiles").select("id,full_name,reg_number,department,level,gender,phone").in("id", userIds);
+        profiles = ps ?? [];
+      }
+      return { elections: elections ?? [], positions: positions ?? [], candidates: candidates ?? [], profiles };
     },
   });
+
+  const [viewing, setViewing] = useState<any | null>(null);
 
   const [open, setOpen] = useState(false);
   const [posOpen, setPosOpen] = useState(false);
