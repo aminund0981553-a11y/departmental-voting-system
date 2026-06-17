@@ -48,6 +48,33 @@ function NominatePage() {
   const [fullName, setFullName] = useState("");
   const [manifesto, setManifesto] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoUpload = async (file: File) => {
+    if (!user) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please choose an image file"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be 5 MB or smaller"); return; }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("candidate-photos")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      const { data: signed, error: signErr } = await supabase.storage
+        .from("candidate-photos")
+        .createSignedUrl(path, 60 * 60 * 24 * 365 * 5); // 5 years
+      if (signErr) throw signErr;
+      setPhotoUrl(signed.signedUrl);
+      toast.success("Photo uploaded");
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const elections = data?.elections ?? [];
   const positionsForElection = (data?.positions ?? []).filter((p) => p.election_id === electionId);
