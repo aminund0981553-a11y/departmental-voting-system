@@ -51,9 +51,9 @@ function VoteFlow() {
       }));
       const { data: inserted, error } = await supabase.from("votes").insert(rows).select("receipt");
       if (error) throw error;
-      await supabase.from("audit_logs").insert({
-        user_id: user!.id, action: "vote_cast",
-        metadata: { election_id: electionId, count: rows.length },
+      await supabase.rpc("log_audit", {
+        _action: "vote_cast",
+        _metadata: { election_id: electionId, count: rows.length },
       });
       return inserted?.map((r) => r.receipt) ?? [];
     },
