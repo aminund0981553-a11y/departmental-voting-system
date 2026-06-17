@@ -287,12 +287,20 @@ export type Database = {
           vote_count: number
         }[]
       }
+      get_my_candidate_reject_reason: {
+        Args: { _candidate_id: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      log_audit: {
+        Args: { _action: string; _metadata?: Json }
+        Returns: undefined
       }
     }
     Enums: {
