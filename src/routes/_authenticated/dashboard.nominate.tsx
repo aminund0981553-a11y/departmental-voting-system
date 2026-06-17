@@ -164,13 +164,38 @@ function NominatePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Photo URL (optional)</Label>
-                  <Input
-                    type="url"
-                    value={photoUrl}
-                    onChange={(e) => setPhotoUrl(e.target.value)}
-                    placeholder="https://..."
+                  <Label>Candidate photo (optional)</Label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handlePhotoUpload(f);
+                      e.target.value = "";
+                    }}
                   />
+                  {photoUrl ? (
+                    <div className="flex items-center gap-3 rounded-md border p-2">
+                      <img src={photoUrl} alt="Candidate preview" className="h-16 w-16 rounded object-cover" />
+                      <div className="flex-1 text-xs text-muted-foreground">Photo uploaded</div>
+                      <Button type="button" size="sm" variant="ghost" onClick={() => setPhotoUrl("")}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      {uploading ? "Uploading..." : "Upload photo"}
+                    </Button>
+                  )}
+                  <p className="text-xs text-muted-foreground">JPG/PNG up to 5 MB.</p>
                 </div>
 
                 <div className="space-y-2">
