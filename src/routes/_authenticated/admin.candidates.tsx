@@ -298,6 +298,68 @@ function AdminCandidates() {
         })}
         {filteredPositions.length === 0 && <Card><CardContent className="p-8 text-center text-muted-foreground">No positions yet. Create one above.</CardContent></Card>}
       </div>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Nomination details</DialogTitle></DialogHeader>
+          {viewing && (() => {
+            const pos = (data?.positions ?? []).find((p) => p.id === viewing.position_id);
+            const el = elections.find((e) => e.id === pos?.election_id);
+            const prof = (data?.profiles ?? []).find((p: any) => p.id === viewing.user_id);
+            return (
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  {viewing.photo_url ? (
+                    <img src={viewing.photo_url} alt={viewing.full_name} className="h-32 w-32 rounded-md object-cover border" />
+                  ) : (
+                    <div className="h-32 w-32 rounded-md border bg-muted flex items-center justify-center text-xs text-muted-foreground">No photo</div>
+                  )}
+                  <div className="flex-1 space-y-1">
+                    <div className="text-lg font-semibold">{viewing.full_name}</div>
+                    <div className="text-sm text-muted-foreground">{el?.title} — {pos?.title}</div>
+                    <Badge variant={viewing.status === "approved" ? "default" : viewing.status === "rejected" ? "destructive" : "secondary"}>{viewing.status}</Badge>
+                    {viewing.submitted_at && <div className="text-xs text-muted-foreground">Submitted {new Date(viewing.submitted_at).toLocaleString()}</div>}
+                  </div>
+                </div>
+                {prof && (
+                  <div className="grid grid-cols-2 gap-3 rounded-lg border p-3 text-sm">
+                    <div><span className="text-muted-foreground">Reg number:</span> {prof.reg_number ?? "—"}</div>
+                    <div><span className="text-muted-foreground">Department:</span> {prof.department ?? "—"}</div>
+                    <div><span className="text-muted-foreground">Level:</span> {prof.level ?? "—"}</div>
+                    <div><span className="text-muted-foreground">Gender:</span> {prof.gender ?? "—"}</div>
+                    <div className="col-span-2"><span className="text-muted-foreground">Phone:</span> {prof.phone ?? "—"}</div>
+                  </div>
+                )}
+                {viewing.manifesto && (
+                  <div>
+                    <div className="mb-1 text-sm font-medium">Manifesto</div>
+                    <p className="whitespace-pre-wrap rounded-lg border p-3 text-sm">{viewing.manifesto}</p>
+                  </div>
+                )}
+                {viewing.reject_reason && (
+                  <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
+                    <div className="font-medium text-destructive">Rejection reason</div>
+                    <div>{viewing.reject_reason}</div>
+                  </div>
+                )}
+                {viewing.status === "pending" && (
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => {
+                      const reason = prompt("Reason for rejection (shown to applicant):") ?? "";
+                      if (reason.trim()) { rejectNomination.mutate({ id: viewing.id, reason: reason.trim() }); setViewing(null); }
+                    }}>
+                      <XCircle className="mr-1 h-4 w-4" /> Reject
+                    </Button>
+                    <Button onClick={() => { approveNomination.mutate(viewing.id); setViewing(null); }}>
+                      <CheckCircle2 className="mr-1 h-4 w-4" /> Approve
+                    </Button>
+                  </DialogFooter>
+                )}
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
