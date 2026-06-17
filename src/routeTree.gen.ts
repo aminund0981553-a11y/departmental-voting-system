@@ -32,6 +32,7 @@ import { Route as AuthenticatedAdminVotersRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminElectionsRouteImport } from './routes/_authenticated/admin.elections'
 import { Route as AuthenticatedAdminCandidatesRouteImport } from './routes/_authenticated/admin.candidates'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
+import { Route as ApiPublicHooksElectionSchedulerRouteImport } from './routes/api/public/hooks/election-scheduler'
 import { Route as AuthenticatedDashboardVoteElectionIdRouteImport } from './routes/_authenticated/dashboard.vote.$electionId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -156,6 +157,12 @@ const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const ApiPublicHooksElectionSchedulerRoute =
+  ApiPublicHooksElectionSchedulerRouteImport.update({
+    id: '/api/public/hooks/election-scheduler',
+    path: '/api/public/hooks/election-scheduler',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedDashboardVoteElectionIdRoute =
   AuthenticatedDashboardVoteElectionIdRouteImport.update({
     id: '/vote/$electionId',
@@ -187,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/dashboard/vote/$electionId': typeof AuthenticatedDashboardVoteElectionIdRoute
+  '/api/public/hooks/election-scheduler': typeof ApiPublicHooksElectionSchedulerRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -210,6 +218,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/dashboard/vote/$electionId': typeof AuthenticatedDashboardVoteElectionIdRoute
+  '/api/public/hooks/election-scheduler': typeof ApiPublicHooksElectionSchedulerRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -237,6 +246,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/_authenticated/dashboard/vote/$electionId': typeof AuthenticatedDashboardVoteElectionIdRoute
+  '/api/public/hooks/election-scheduler': typeof ApiPublicHooksElectionSchedulerRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -264,6 +274,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/dashboard/'
     | '/dashboard/vote/$electionId'
+    | '/api/public/hooks/election-scheduler'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/dashboard/vote/$electionId'
+    | '/api/public/hooks/election-scheduler'
   id:
     | '__root__'
     | '/'
@@ -313,6 +325,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/'
     | '/_authenticated/dashboard/'
     | '/_authenticated/dashboard/vote/$electionId'
+    | '/api/public/hooks/election-scheduler'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -325,6 +338,7 @@ export interface RootRouteChildren {
   FaqsRoute: typeof FaqsRoute
   ResultsRoute: typeof ResultsRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiPublicHooksElectionSchedulerRoute: typeof ApiPublicHooksElectionSchedulerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -490,6 +504,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAuditRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/api/public/hooks/election-scheduler': {
+      id: '/api/public/hooks/election-scheduler'
+      path: '/api/public/hooks/election-scheduler'
+      fullPath: '/api/public/hooks/election-scheduler'
+      preLoaderRoute: typeof ApiPublicHooksElectionSchedulerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/dashboard/vote/$electionId': {
       id: '/_authenticated/dashboard/vote/$electionId'
       path: '/vote/$electionId'
@@ -590,6 +611,7 @@ const rootRouteChildren: RootRouteChildren = {
   FaqsRoute: FaqsRoute,
   ResultsRoute: ResultsRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiPublicHooksElectionSchedulerRoute: ApiPublicHooksElectionSchedulerRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
