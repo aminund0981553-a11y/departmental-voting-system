@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Plus, Play, Pause, Square, Trash2, Eye } from "lucide-react";
+import { Plus, Play, Pause, Square, Trash2, Eye, ListPlus, X } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
