@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, Upload } from "lucide-react";
+import { Plus, Trash2, Upload, Eye, CheckCircle2, XCircle } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,11 +27,19 @@ function AdminCandidates() {
       const [{ data: elections }, { data: positions }, { data: candidates }] = await Promise.all([
         supabase.from("elections").select("id,title").order("created_at", { ascending: false }),
         supabase.from("positions").select("*").order("display_order"),
-        supabase.from("candidates").select("*"),
+        supabase.from("candidates").select("*").order("submitted_at", { ascending: false, nullsFirst: false }),
       ]);
-      return { elections: elections ?? [], positions: positions ?? [], candidates: candidates ?? [] };
+      const userIds = Array.from(new Set((candidates ?? []).map((c: any) => c.user_id).filter(Boolean)));
+      let profiles: any[] = [];
+      if (userIds.length) {
+        const { data: ps } = await supabase.from("profiles").select("id,full_name,reg_number,department,level,gender,phone").in("id", userIds);
+        profiles = ps ?? [];
+      }
+      return { elections: elections ?? [], positions: positions ?? [], candidates: candidates ?? [], profiles };
     },
   });
+
+  const [viewing, setViewing] = useState<any | null>(null);
 
   const [open, setOpen] = useState(false);
   const [posOpen, setPosOpen] = useState(false);
@@ -198,20 +206,41 @@ function AdminCandidates() {
               {pending.map((c) => {
                 const pos = (data?.positions ?? []).find((p) => p.id === c.position_id);
                 const el = elections.find((e) => e.id === pos?.election_id);
+                const prof = (data?.profiles ?? []).find((p: any) => p.id === c.user_id);
                 return (
                   <div key={c.id} className="rounded-lg border p-3">
                     <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="font-medium">{c.full_name}</div>
-                        <div className="text-xs text-muted-foreground">{el?.title} — {pos?.title}</div>
-                        {c.manifesto && <p className="mt-2 text-sm">{c.manifesto}</p>}
+                      <div className="flex min-w-0 gap-3">
+                        {c.photo_url ? (
+                          <img src={c.photo_url} alt={c.full_name} className="h-16 w-16 rounded-md object-cover border" />
+                        ) : (
+                          <div className="h-16 w-16 rounded-md border bg-muted flex items-center justify-center text-xs text-muted-foreground">No photo</div>
+                        )}
+                        <div className="min-w-0">
+                          <div className="font-medium">{c.full_name}</div>
+                          <div className="text-xs text-muted-foreground">{el?.title} — {pos?.title}</div>
+                          {prof && (
+                            <div className="mt-1 text-xs text-muted-foreground">
+                              {prof.reg_number ? `Reg: ${prof.reg_number} · ` : ""}{prof.department ?? ""}{prof.level ? ` · L${prof.level}` : ""}
+                            </div>
+                          )}
+                          {c.submitted_at && <div className="text-xs text-muted-foreground">Submitted {new Date(c.submitted_at).toLocaleString()}</div>}
+                          {c.manifesto && <p className="mt-2 text-sm line-clamp-3">{c.manifesto}</p>}
+                        </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" onClick={() => approveNomination.mutate(c.id)}>Approve</Button>
+                        <Button size="sm" variant="outline" onClick={() => setViewing(c)}>
+                          <Eye className="mr-1 h-3.5 w-3.5" /> View
+                        </Button>
+                        <Button size="sm" onClick={() => approveNomination.mutate(c.id)}>
+                          <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Approve
+                        </Button>
                         <Button size="sm" variant="outline" onClick={() => {
                           const reason = prompt("Reason for rejection (shown to applicant):") ?? "";
                           if (reason.trim()) rejectNomination.mutate({ id: c.id, reason: reason.trim() });
-                        }}>Reject</Button>
+                        }}>
+                          <XCircle className="mr-1 h-3.5 w-3.5" /> Reject
+                        </Button>
                         <Button size="sm" variant="ghost" onClick={() => { if (confirm("Delete nomination?")) delCand.mutate(c.id); }}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
@@ -269,6 +298,68 @@ function AdminCandidates() {
         })}
         {filteredPositions.length === 0 && <Card><CardContent className="p-8 text-center text-muted-foreground">No positions yet. Create one above.</CardContent></Card>}
       </div>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Nomination details</DialogTitle></DialogHeader>
+          {viewing && (() => {
+            const pos = (data?.positions ?? []).find((p) => p.id === viewing.position_id);
+            const el = elections.find((e) => e.id === pos?.election_id);
+            const prof = (data?.profiles ?? []).find((p: any) => p.id === viewing.user_id);
+            return (
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  {viewing.photo_url ? (
+                    <img src={viewing.photo_url} alt={viewing.full_name} className="h-32 w-32 rounded-md object-cover border" />
+                  ) : (
+                    <div className="h-32 w-32 rounded-md border bg-muted flex items-center justify-center text-xs text-muted-foreground">No photo</div>
+                  )}
+                  <div className="flex-1 space-y-1">
+                    <div className="text-lg font-semibold">{viewing.full_name}</div>
+                    <div className="text-sm text-muted-foreground">{el?.title} — {pos?.title}</div>
+                    <Badge variant={viewing.status === "approved" ? "default" : viewing.status === "rejected" ? "destructive" : "secondary"}>{viewing.status}</Badge>
+                    {viewing.submitted_at && <div className="text-xs text-muted-foreground">Submitted {new Date(viewing.submitted_at).toLocaleString()}</div>}
+                  </div>
+                </div>
+                {prof && (
+                  <div className="grid grid-cols-2 gap-3 rounded-lg border p-3 text-sm">
+                    <div><span className="text-muted-foreground">Reg number:</span> {prof.reg_number ?? "—"}</div>
+                    <div><span className="text-muted-foreground">Department:</span> {prof.department ?? "—"}</div>
+                    <div><span className="text-muted-foreground">Level:</span> {prof.level ?? "—"}</div>
+                    <div><span className="text-muted-foreground">Gender:</span> {prof.gender ?? "—"}</div>
+                    <div className="col-span-2"><span className="text-muted-foreground">Phone:</span> {prof.phone ?? "—"}</div>
+                  </div>
+                )}
+                {viewing.manifesto && (
+                  <div>
+                    <div className="mb-1 text-sm font-medium">Manifesto</div>
+                    <p className="whitespace-pre-wrap rounded-lg border p-3 text-sm">{viewing.manifesto}</p>
+                  </div>
+                )}
+                {viewing.reject_reason && (
+                  <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
+                    <div className="font-medium text-destructive">Rejection reason</div>
+                    <div>{viewing.reject_reason}</div>
+                  </div>
+                )}
+                {viewing.status === "pending" && (
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => {
+                      const reason = prompt("Reason for rejection (shown to applicant):") ?? "";
+                      if (reason.trim()) { rejectNomination.mutate({ id: viewing.id, reason: reason.trim() }); setViewing(null); }
+                    }}>
+                      <XCircle className="mr-1 h-4 w-4" /> Reject
+                    </Button>
+                    <Button onClick={() => { approveNomination.mutate(viewing.id); setViewing(null); }}>
+                      <CheckCircle2 className="mr-1 h-4 w-4" /> Approve
+                    </Button>
+                  </DialogFooter>
+                )}
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
