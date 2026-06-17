@@ -136,28 +136,74 @@ function AdminElections() {
 
       <div className="grid gap-3">
         {(data?.elections ?? []).map((e) => {
-          const posCount = data!.positions.filter((p) => p.election_id === e.id).length;
+          const positions = (data?.positions ?? []).filter((p) => p.election_id === e.id);
           return (
             <Card key={e.id}>
-              <CardContent className="flex flex-wrap items-center justify-between gap-3 p-5">
-                <div>
-                  <div className="font-semibold">{e.title}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {format(new Date(e.starts_at), "PP p")} → {format(new Date(e.ends_at), "PP p")} · {posCount} positions
+              <CardContent className="space-y-4 p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="font-semibold">{e.title}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {format(new Date(e.starts_at), "PP p")} → {format(new Date(e.ends_at), "PP p")} · {positions.length} positions
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge>{e.status}</Badge>
+                    {e.results_published && <Badge variant="outline" className="border-success text-success">Results public</Badge>}
+                    <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: e.id, status: "active" })}><Play className="h-3.5 w-3.5" /></Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: e.id, status: "paused" })}><Pause className="h-3.5 w-3.5" /></Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: e.id, status: "ended" })}><Square className="h-3.5 w-3.5" /></Button>
+                    <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: e.id, results_published: !e.results_published })}>
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => { if (confirm("Delete this election? Votes will be removed.")) del.mutate(e.id); }}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge>{e.status}</Badge>
-                  {e.results_published && <Badge variant="outline" className="border-success text-success">Results public</Badge>}
-                  <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: e.id, status: "active" })}><Play className="h-3.5 w-3.5" /></Button>
-                  <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: e.id, status: "paused" })}><Pause className="h-3.5 w-3.5" /></Button>
-                  <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: e.id, status: "ended" })}><Square className="h-3.5 w-3.5" /></Button>
-                  <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: e.id, results_published: !e.results_published })}>
-                    <Eye className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={() => { if (confirm("Delete this election? Votes will be removed.")) del.mutate(e.id); }}>
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+
+                <div className="rounded-md border bg-muted/30 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="text-sm font-medium">Positions</div>
+                    {positions.length === 0 && (
+                      <Button size="sm" variant="outline" onClick={() => seedDefaults.mutate(e.id)} disabled={seedDefaults.isPending}>
+                        <ListPlus className="mr-1 h-3.5 w-3.5" /> Seed defaults
+                      </Button>
+                    )}
+                  </div>
+                  {positions.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No positions yet. Candidates can't nominate until you add some.</p>
+                  ) : (
+                    <ul className="mb-2 flex flex-wrap gap-2">
+                      {positions.map((p) => (
+                        <li key={p.id} className="inline-flex items-center gap-1 rounded-full border bg-background px-2 py-1 text-xs">
+                          {p.title}
+                          <button
+                            type="button"
+                            className="ml-1 text-muted-foreground hover:text-destructive"
+                            onClick={() => { if (confirm(`Remove position "${p.title}"?`)) delPosition.mutate(p.id); }}
+                            aria-label={`Remove ${p.title}`}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <form
+                    onSubmit={(ev) => {
+                      ev.preventDefault();
+                      const fd = new FormData(ev.currentTarget);
+                      const title = String(fd.get("title") ?? "");
+                      addPosition.mutate({ election_id: e.id, title }, {
+                        onSuccess: () => { (ev.target as HTMLFormElement).reset(); },
+                      });
+                    }}
+                    className="flex gap-2"
+                  >
+                    <Input name="title" placeholder="Add a position (e.g. President)" className="h-8" />
+                    <Button type="submit" size="sm" disabled={addPosition.isPending}>Add</Button>
+                  </form>
                 </div>
               </CardContent>
             </Card>
