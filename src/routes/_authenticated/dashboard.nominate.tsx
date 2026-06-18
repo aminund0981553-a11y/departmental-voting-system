@@ -86,6 +86,15 @@ function NominatePage() {
       const name = fullName.trim() || data?.profile?.full_name?.trim() || "";
       if (!name) throw new Error("Please add your full name");
       if (manifesto.trim().length < 20) throw new Error("Manifesto must be at least 20 characters");
+
+      // Prevent duplicate submission for the same position
+      const existing = (data?.mine ?? []).find((c) => c.position_id === positionId);
+      if (existing) {
+        if (existing.status === "pending") throw new Error("You already have a pending nomination for this position. Withdraw it before submitting a new one.");
+        if (existing.status === "approved") throw new Error("You are already an approved candidate for this position.");
+        if (existing.status === "rejected") throw new Error("Your previous nomination for this position was rejected. Please contact the electoral committee.");
+      }
+
       const { error } = await supabase.from("candidates").insert({
         user_id: user!.id,
         position_id: positionId,
@@ -95,8 +104,12 @@ function NominatePage() {
         status: "pending",
         approved: false,
       });
-      if (error) throw error;
+      if (error) {
+        if ((error as any).code === "23505") throw new Error("You already have a nomination for this position.");
+        throw error;
+      }
     },
+
     onSuccess: () => {
       toast.success("Nomination submitted — awaiting admin review");
       setPositionId(""); setManifesto(""); setPhotoUrl("");
