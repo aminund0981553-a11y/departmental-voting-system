@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrustRouteImport } from './routes/trust'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResultsRouteImport } from './routes/results'
 import { Route as FaqsRouteImport } from './routes/faqs'
@@ -28,6 +29,7 @@ import { Route as AuthenticatedDashboardProfileRouteImport } from './routes/_aut
 import { Route as AuthenticatedDashboardNominateRouteImport } from './routes/_authenticated/dashboard.nominate'
 import { Route as AuthenticatedDashboardHistoryRouteImport } from './routes/_authenticated/dashboard.history'
 import { Route as AuthenticatedDashboardElectionsRouteImport } from './routes/_authenticated/dashboard.elections'
+import { Route as AuthenticatedAdminVotesRouteImport } from './routes/_authenticated/admin.votes'
 import { Route as AuthenticatedAdminVotersRouteImport } from './routes/_authenticated/admin.voters'
 import { Route as AuthenticatedAdminElectionsRouteImport } from './routes/_authenticated/admin.elections'
 import { Route as AuthenticatedAdminCandidatesRouteImport } from './routes/_authenticated/admin.candidates'
@@ -35,6 +37,11 @@ import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authentic
 import { Route as ApiPublicHooksElectionSchedulerRouteImport } from './routes/api/public/hooks/election-scheduler'
 import { Route as AuthenticatedDashboardVoteElectionIdRouteImport } from './routes/_authenticated/dashboard.vote.$electionId'
 
+const TrustRoute = TrustRouteImport.update({
+  id: '/trust',
+  path: '/trust',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -134,6 +141,11 @@ const AuthenticatedDashboardElectionsRoute =
     path: '/elections',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedAdminVotesRoute = AuthenticatedAdminVotesRouteImport.update({
+  id: '/votes',
+  path: '/votes',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminVotersRoute =
   AuthenticatedAdminVotersRouteImport.update({
     id: '/voters',
@@ -179,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/faqs': typeof FaqsRoute
   '/results': typeof ResultsRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/trust': typeof TrustRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/elections/$id': typeof ElectionsIdRoute
@@ -187,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/admin/candidates': typeof AuthenticatedAdminCandidatesRoute
   '/admin/elections': typeof AuthenticatedAdminElectionsRoute
   '/admin/voters': typeof AuthenticatedAdminVotersRoute
+  '/admin/votes': typeof AuthenticatedAdminVotesRoute
   '/dashboard/elections': typeof AuthenticatedDashboardElectionsRoute
   '/dashboard/history': typeof AuthenticatedDashboardHistoryRoute
   '/dashboard/nominate': typeof AuthenticatedDashboardNominateRoute
@@ -205,12 +219,14 @@ export interface FileRoutesByTo {
   '/faqs': typeof FaqsRoute
   '/results': typeof ResultsRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/trust': typeof TrustRoute
   '/elections/$id': typeof ElectionsIdRoute
   '/results/$id': typeof ResultsIdRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/candidates': typeof AuthenticatedAdminCandidatesRoute
   '/admin/elections': typeof AuthenticatedAdminElectionsRoute
   '/admin/voters': typeof AuthenticatedAdminVotersRoute
+  '/admin/votes': typeof AuthenticatedAdminVotesRoute
   '/dashboard/elections': typeof AuthenticatedDashboardElectionsRoute
   '/dashboard/history': typeof AuthenticatedDashboardHistoryRoute
   '/dashboard/nominate': typeof AuthenticatedDashboardNominateRoute
@@ -231,6 +247,7 @@ export interface FileRoutesById {
   '/faqs': typeof FaqsRoute
   '/results': typeof ResultsRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/trust': typeof TrustRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/elections/$id': typeof ElectionsIdRoute
@@ -239,6 +256,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/candidates': typeof AuthenticatedAdminCandidatesRoute
   '/_authenticated/admin/elections': typeof AuthenticatedAdminElectionsRoute
   '/_authenticated/admin/voters': typeof AuthenticatedAdminVotersRoute
+  '/_authenticated/admin/votes': typeof AuthenticatedAdminVotesRoute
   '/_authenticated/dashboard/elections': typeof AuthenticatedDashboardElectionsRoute
   '/_authenticated/dashboard/history': typeof AuthenticatedDashboardHistoryRoute
   '/_authenticated/dashboard/nominate': typeof AuthenticatedDashboardNominateRoute
@@ -259,6 +277,7 @@ export interface FileRouteTypes {
     | '/faqs'
     | '/results'
     | '/sitemap.xml'
+    | '/trust'
     | '/admin'
     | '/dashboard'
     | '/elections/$id'
@@ -267,6 +286,7 @@ export interface FileRouteTypes {
     | '/admin/candidates'
     | '/admin/elections'
     | '/admin/voters'
+    | '/admin/votes'
     | '/dashboard/elections'
     | '/dashboard/history'
     | '/dashboard/nominate'
@@ -285,12 +305,14 @@ export interface FileRouteTypes {
     | '/faqs'
     | '/results'
     | '/sitemap.xml'
+    | '/trust'
     | '/elections/$id'
     | '/results/$id'
     | '/admin/audit'
     | '/admin/candidates'
     | '/admin/elections'
     | '/admin/voters'
+    | '/admin/votes'
     | '/dashboard/elections'
     | '/dashboard/history'
     | '/dashboard/nominate'
@@ -310,6 +332,7 @@ export interface FileRouteTypes {
     | '/faqs'
     | '/results'
     | '/sitemap.xml'
+    | '/trust'
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/elections/$id'
@@ -318,6 +341,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/candidates'
     | '/_authenticated/admin/elections'
     | '/_authenticated/admin/voters'
+    | '/_authenticated/admin/votes'
     | '/_authenticated/dashboard/elections'
     | '/_authenticated/dashboard/history'
     | '/_authenticated/dashboard/nominate'
@@ -338,11 +362,19 @@ export interface RootRouteChildren {
   FaqsRoute: typeof FaqsRoute
   ResultsRoute: typeof ResultsRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TrustRoute: typeof TrustRoute
   ApiPublicHooksElectionSchedulerRoute: typeof ApiPublicHooksElectionSchedulerRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/trust': {
+      id: '/trust'
+      path: '/trust'
+      fullPath: '/trust'
+      preLoaderRoute: typeof TrustRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -476,6 +508,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardElectionsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/admin/votes': {
+      id: '/_authenticated/admin/votes'
+      path: '/votes'
+      fullPath: '/admin/votes'
+      preLoaderRoute: typeof AuthenticatedAdminVotesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/voters': {
       id: '/_authenticated/admin/voters'
       path: '/voters'
@@ -526,6 +565,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCandidatesRoute: typeof AuthenticatedAdminCandidatesRoute
   AuthenticatedAdminElectionsRoute: typeof AuthenticatedAdminElectionsRoute
   AuthenticatedAdminVotersRoute: typeof AuthenticatedAdminVotersRoute
+  AuthenticatedAdminVotesRoute: typeof AuthenticatedAdminVotesRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
@@ -534,6 +574,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCandidatesRoute: AuthenticatedAdminCandidatesRoute,
   AuthenticatedAdminElectionsRoute: AuthenticatedAdminElectionsRoute,
   AuthenticatedAdminVotersRoute: AuthenticatedAdminVotersRoute,
+  AuthenticatedAdminVotesRoute: AuthenticatedAdminVotesRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
@@ -611,6 +652,7 @@ const rootRouteChildren: RootRouteChildren = {
   FaqsRoute: FaqsRoute,
   ResultsRoute: ResultsRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TrustRoute: TrustRoute,
   ApiPublicHooksElectionSchedulerRoute: ApiPublicHooksElectionSchedulerRoute,
 }
 export const routeTree = rootRouteImport

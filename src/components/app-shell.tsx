@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import {
   LayoutDashboard, Vote, History, User, LogOut, Settings,
-  ShieldCheck, Users, CalendarRange, Trophy, ScrollText, UserPlus,
+  ShieldCheck, Users, CalendarRange, Trophy, ScrollText, UserPlus, ListChecks,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -22,6 +22,7 @@ const adminNav = [
   { to: "/admin/elections", label: "Elections", icon: CalendarRange },
   { to: "/admin/candidates", label: "Candidates", icon: Trophy },
   { to: "/admin/voters", label: "Voters", icon: Users },
+  { to: "/admin/votes", label: "Votes", icon: ListChecks },
   { to: "/admin/audit", label: "Audit Log", icon: ScrollText },
 ] as const;
 
