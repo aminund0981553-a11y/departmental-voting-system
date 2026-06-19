@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { UserPlus, Trash2, Clock, CheckCircle2, XCircle, Upload, X } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
@@ -13,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { getNominatePageData, submitNomination, withdrawNomination } from "@/lib/student.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard/nominate")({
   head: () => ({ meta: [{ title: "Run for Office — GSU CS E-Voting" }] }),
@@ -22,31 +24,26 @@ export const Route = createFileRoute("/_authenticated/dashboard/nominate")({
 function NominatePage() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const getNominateData = useServerFn(getNominatePageData);
+  const submitNominationFn = useServerFn(submitNomination);
+  const withdrawNominationFn = useServerFn(withdrawNomination);
 
-  const { data } = useQuery<any, any>({
+  const { data, error } = useQuery({
     queryKey: ["nominate-data", user?.id],
+    queryFn: async () => await getNominateData(),
     enabled: !!user,
-    queryFn: async () => {
-      const [{ data: elections }, { data: positions }, { data: mine }, { data: profile }] = await Promise.all([
-        supabase.from("elections").select("id,title,status,starts_at,ends_at")
-          .in("status", ["scheduled", "active"]).order("starts_at"),
-        supabase.from("positions").select("id,title,election_id,description").order("display_order"),
-        supabase.from("candidates").select("*").eq("user_id", user!.id).order("submitted_at", { ascending: false }),
-        supabase.from("profiles").select("full_name").eq("id", user!.id).maybeSingle(),
-      ]);
-      return {
-        elections: elections ?? [],
-        positions: positions ?? [],
-        mine: mine ?? [],
-        profile,
-      };
-    },
-    onError: (e: any) => {
-      if (e?.status === 403) {
-        toast.error("Unable to load nominations — access denied. Check your Supabase RLS policy or your login state.");
-      }
-    },
-  } as any);
+  });
+
+  useEffect(() => {
+    if (!error) return;
+    const message = error?.message ?? "Unable to load nominations.";
+    const status = (error as any)?.status;
+    if (status === 403 || message.includes("Unauthorized")) {
+      toast.error("Unable to load nominations — access denied. Check your login state.");
+    } else {
+      toast.error(message);
+    }
+  }, [error]);
 
   const [electionId, setElectionId] = useState("");
   const [positionId, setPositionId] = useState("");
@@ -102,19 +99,15 @@ function NominatePage() {
         if (existing.status === "rejected") throw new Error("Your previous nomination for this position was rejected. Please contact the electoral committee.");
       }
 
-      const { error } = await supabase.from("candidates").insert({
-        user_id: user!.id,
-        position_id: positionId,
-        full_name: name,
-        manifesto: manifesto.trim(),
-        photo_url: photoUrl.trim() || null,
-        status: "pending",
-        approved: false,
+      await submitNominationFn({
+        data: {
+          position_id: positionId,
+          full_name: name,
+          manifesto: manifesto.trim(),
+          photo_url: photoUrl.trim() || null,
+        },
       });
-      if (error) {
-        if ((error as any).code === "23505") throw new Error("You already have a nomination for this position.");
-        throw error;
-      }
+      
     },
 
     onSuccess: () => {
@@ -127,8 +120,7 @@ function NominatePage() {
 
   const withdraw = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("candidates").delete().eq("id", id);
-      if (error) throw error;
+      await withdrawNominationFn({ data: { id } });
     },
     onSuccess: () => { toast.success("Nomination withdrawn"); qc.invalidateQueries({ queryKey: ["nominate-data"] }); },
     onError: (e: any) => toast.error(e.message),

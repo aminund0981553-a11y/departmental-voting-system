@@ -8,8 +8,9 @@ import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useServerFn } from "@tanstack/react-start";
+import { getStudentDashboardData } from "@/lib/student.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   head: () => ({ meta: [{ title: "Dashboard — GSU CS E-Voting" }] }),
@@ -18,28 +19,23 @@ export const Route = createFileRoute("/_authenticated/dashboard/")({
 
 function Dashboard() {
   const { user } = useAuth();
-
-  const { data } = useQuery<any, any>({
+  const getDashboardData = useServerFn(getStudentDashboardData);
+  const { data, error } = useQuery({
     queryKey: ["student-overview", user?.id],
+    queryFn: async () => await getDashboardData(),
     enabled: !!user,
-    queryFn: async () => {
-      const [{ data: elections }, { data: myVotes }, { data: profile }, { data: nominations }, { data: positions }] = await Promise.all([
-        supabase.from("elections").select("*").in("status", ["active", "scheduled"]).order("starts_at"),
-        supabase.from("votes").select("election_id").eq("voter_id", user!.id),
-        supabase.from("profiles").select("*").eq("id", user!.id).maybeSingle(),
-        supabase.from("candidates").select("*").eq("user_id", user!.id).in("status", ["approved", "rejected"]),
-        supabase.from("positions").select("id,title,election_id"),
-      ]);
-      return { elections: elections ?? [], myVotes: myVotes ?? [], profile, nominations: nominations ?? [], positions: positions ?? [] };
-    },
-    onError: (e: any) => {
-      if (e?.status === 403) {
-        toast.error("Unable to load your nominations — access denied. Check your Supabase RLS policy or sign in again.");
-      } else {
-        toast.error(`Unable to load dashboard data. ${e?.message ?? "Please try again."}`);
-      }
-    },
-  } as any);
+  });
+
+  useEffect(() => {
+    if (!error) return;
+    const message = error?.message ?? "Unable to load dashboard data. Please try again.";
+    const status = (error as any)?.status;
+    if (status === 403 || message.includes("Unauthorized")) {
+      toast.error("Unable to load your nominations — access denied. Check your login state.");
+    } else {
+      toast.error(message);
+    }
+  }, [error]);
 
   const nominations = (data?.nominations ?? []) as any[];
   const positions = (data?.positions ?? []) as any[];

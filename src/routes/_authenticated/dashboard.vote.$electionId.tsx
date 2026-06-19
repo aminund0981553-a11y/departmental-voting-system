@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CheckCircle2, ShieldCheck, ArrowLeft, Download } from "lucide-react";
@@ -10,8 +11,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { getVoteBallotData, submitVote } from "@/lib/student.functions";
 import { downloadCSV } from "@/lib/export-utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard/vote/$electionId")({
@@ -26,22 +27,13 @@ function VoteFlow() {
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [receipts, setReceipts] = useState<string[] | null>(null);
+  const getBallotData = useServerFn(getVoteBallotData);
+  const submitVoteFn = useServerFn(submitVote);
 
   const { data, isLoading } = useQuery({
     queryKey: ["vote-ballot", electionId, user?.id],
+    queryFn: async () => await getBallotData({ data: { electionId } }),
     enabled: !!user,
-    queryFn: async () => {
-      const [{ data: election }, { data: positions }, { data: candidates }, { data: existing }] = await Promise.all([
-        supabase.from("elections").select("*").eq("id", electionId).maybeSingle(),
-        supabase.from("positions").select("*").eq("election_id", electionId).order("display_order"),
-        supabase.from("candidates").select("*, positions!inner(election_id)").eq("positions.election_id", electionId).eq("approved", true),
-        supabase.from("votes").select("position_id").eq("voter_id", user!.id).eq("election_id", electionId),
-      ]);
-      return {
-        election, positions: positions ?? [], candidates: candidates ?? [],
-        votedPositions: new Set((existing ?? []).map((v) => v.position_id)),
-      };
-    },
   });
 
   const submit = useMutation({
@@ -49,13 +41,8 @@ function VoteFlow() {
       const rows = Object.entries(selections).map(([position_id, candidate_id]) => ({
         election_id: electionId, position_id, candidate_id, voter_id: user!.id,
       }));
-      const { data: inserted, error } = await supabase.from("votes").insert(rows).select("receipt");
-      if (error) throw error;
-      await supabase.rpc("log_audit", {
-        _action: "vote_cast",
-        _metadata: { election_id: electionId, count: rows.length },
-      });
-      return inserted?.map((r) => r.receipt) ?? [];
+      const { receipts } = await submitVoteFn({ data: { electionId, rows } });
+      return receipts;
     },
     onSuccess: (r) => {
       setReceipts(r);
