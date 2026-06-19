@@ -9,4 +9,10 @@ export default defineConfig({
   nitro: {
     preset: "vercel",
   },
+  vite: {
+    build: {
+      // Increase chunk size warning threshold (in KB) to reduce noisy warnings.
+      chunkSizeWarningLimit: 2000,
+    },
+  },
 });
