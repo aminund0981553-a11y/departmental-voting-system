@@ -37,6 +37,14 @@ function AdminCandidates() {
       }
       return { elections: elections ?? [], positions: positions ?? [], candidates: candidates ?? [], profiles };
     },
+    onError: (e: any) => {
+      // Surface auth / RLS problems clearly in the UI
+      if (e?.status === 403) {
+        toast.error("Access denied when loading candidates. Are you signed in? Check Supabase RLS policies.");
+      } else {
+        toast.error(e?.message ?? "Failed to load candidates");
+      }
+    },
   });
 
   const [viewing, setViewing] = useState<any | null>(null);

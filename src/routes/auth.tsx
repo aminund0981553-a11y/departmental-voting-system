@@ -90,7 +90,13 @@ function SignInForm() {
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      // Provide a more actionable message for common sign-in failures
+      const msg = error.status === 400
+        ? `Sign-in failed: ${error.message}. Check email/password and try again.`
+        : error.message;
+      return toast.error(msg);
+    }
     toast.success("Signed in");
     navigate({ to: "/dashboard" });
   }
@@ -124,11 +130,12 @@ function SignUpForm() {
     const parsed = signUpSchema.safeParse(raw);
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setBusy(true);
+    const REDIRECT = (import.meta.env.VITE_SUPABASE_REDIRECT_URL as string | undefined) || window.location.origin;
     const { error } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: REDIRECT,
         data: {
           full_name: parsed.data.full_name,
           reg_number: parsed.data.reg_number,
@@ -140,7 +147,13 @@ function SignUpForm() {
       },
     });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      // 422 commonly indicates the redirect URL isn't allowed in Supabase settings
+      if (error.status === 422) {
+        return toast.error("Signup failed: redirect URL not allowed. Add your app URL to Supabase Auth redirect URLs.");
+      }
+      return toast.error(error.message);
+    }
     toast.success("Account created — you're signed in.");
     navigate({ to: "/dashboard" });
   }
