@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { getAdminCandidates } from "@/lib/admin.functions";
+import { getAdminCandidates, createPosition, createCandidate, updateCandidate, deleteCandidate, deletePosition, createCandidatesBatch } from "@/lib/admin.functions";
 import { parseCSV } from "@/lib/export-utils";
 
 export const Route = createFileRoute("/_authenticated/admin/candidates")({
@@ -24,6 +24,13 @@ export const Route = createFileRoute("/_authenticated/admin/candidates")({
 function AdminCandidates() {
   const qc = useQueryClient();
   const fetchAdminCandidates = useServerFn(getAdminCandidates);
+  const createPosFn = useServerFn(createPosition);
+  const createCandFn = useServerFn(createCandidate);
+  const updateCandFn = useServerFn(updateCandidate);
+  const deleteCandFn = useServerFn(deleteCandidate);
+  const deletePosFn = useServerFn(deletePosition);
+  const createCandidatesBatchFn = useServerFn(createCandidatesBatch);
+  
   const { data, error } = useQuery<{
     elections: any[];
     positions: any[];
@@ -51,11 +58,14 @@ function AdminCandidates() {
 
   const createPos = useMutation({
     mutationFn: async (form: any) => {
-      const { error } = await supabase.from("positions").insert({
-        election_id: form.election_id, title: form.title, description: form.description,
-        display_order: parseInt(form.display_order || "0", 10),
+      await createPosFn({
+        data: {
+          election_id: form.election_id,
+          title: form.title,
+          description: form.description,
+          display_order: parseInt(form.display_order || "0", 10),
+        },
       });
-      if (error) throw error;
     },
     onSuccess: () => { setPosOpen(false); qc.invalidateQueries(); toast.success("Position added"); },
     onError: (e: any) => toast.error(e.message),
@@ -63,11 +73,14 @@ function AdminCandidates() {
 
   const createCand = useMutation({
     mutationFn: async (form: any) => {
-      const { error } = await supabase.from("candidates").insert({
-        position_id: form.position_id, full_name: form.full_name,
-        manifesto: form.manifesto, approved: true, status: "approved",
+      await createCandFn({
+        data: {
+          position_id: form.position_id,
+          full_name: form.full_name,
+          manifesto: form.manifesto,
+          approved: true,
+        },
       });
-      if (error) throw error;
     },
     onSuccess: () => { setOpen(false); qc.invalidateQueries(); toast.success("Candidate added"); },
     onError: (e: any) => toast.error(e.message),
@@ -75,33 +88,40 @@ function AdminCandidates() {
 
   const approveNomination = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("candidates").update({ approved: true, status: "approved", reject_reason: null }).eq("id", id);
-      if (error) throw error;
+      await updateCandFn({
+        data: { id, approved: true },
+      });
     },
     onSuccess: () => { qc.invalidateQueries(); toast.success("Nomination approved"); },
     onError: (e: any) => toast.error(e.message),
   });
   const rejectNomination = useMutation({
     mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
-      const { error } = await supabase.from("candidates").update({ approved: false, status: "rejected", reject_reason: reason }).eq("id", id);
-      if (error) throw error;
+      await updateCandFn({
+        data: { id, approved: false, reject_reason: reason },
+      });
     },
     onSuccess: () => { qc.invalidateQueries(); toast.success("Nomination rejected"); },
     onError: (e: any) => toast.error(e.message),
   });
   const toggleApproval = useMutation({
     mutationFn: async ({ id, approved }: any) => {
-      const { error } = await supabase.from("candidates").update({ approved, status: approved ? "approved" : "pending" }).eq("id", id);
-      if (error) throw error;
+      await updateCandFn({
+        data: { id, approved },
+      });
     },
     onSuccess: () => qc.invalidateQueries(),
   });
   const delCand = useMutation({
-    mutationFn: async (id: string) => { const { error } = await supabase.from("candidates").delete().eq("id", id); if (error) throw error; },
+    mutationFn: async (id: string) => {
+      await deleteCandFn({ data: { id } });
+    },
     onSuccess: () => { qc.invalidateQueries(); toast.success("Removed"); },
   });
   const delPos = useMutation({
-    mutationFn: async (id: string) => { const { error } = await supabase.from("positions").delete().eq("id", id); if (error) throw error; },
+    mutationFn: async (id: string) => {
+      await deletePosFn({ data: { id } });
+    },
     onSuccess: () => { qc.invalidateQueries(); toast.success("Position removed"); },
   });
 
@@ -128,8 +148,7 @@ function AdminCandidates() {
         toInsert.push({ position_id: pos.id, full_name: name, manifesto: r.manifesto?.trim() || null, approved: true });
       }
       if (!toInsert.length) { toast.error("No valid rows found."); return; }
-      const { error } = await supabase.from("candidates").insert(toInsert);
-      if (error) throw error;
+      await createCandidatesBatchFn({ data: { candidates: toInsert } });
       qc.invalidateQueries();
       toast.success(`Imported ${toInsert.length} candidate(s)${unknown.length ? `; skipped unknown positions: ${[...new Set(unknown)].join(", ")}` : ""}`);
     } catch (e: any) {
