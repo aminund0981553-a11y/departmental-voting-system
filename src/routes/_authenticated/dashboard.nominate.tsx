@@ -41,6 +41,11 @@ function NominatePage() {
         profile,
       };
     },
+    onError: (e: any) => {
+      if (e?.status === 403) {
+        toast.error("Unable to load nominations — access denied. Check your Supabase RLS policy or your login state.");
+      }
+    },
   });
 
   const [electionId, setElectionId] = useState("");

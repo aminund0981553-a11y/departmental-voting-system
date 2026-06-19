@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import { Vote, CheckCircle2, Clock, History, X } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,12 +32,25 @@ function Dashboard() {
       ]);
       return { elections: elections ?? [], myVotes: myVotes ?? [], profile, nominations: nominations ?? [], positions: positions ?? [] };
     },
+    onError: (e: any) => {
+      if (e?.status === 403) {
+        toast.error("Unable to load your nominations — access denied. Check your Supabase RLS policy or sign in again.");
+      } else {
+        toast.error(`Unable to load dashboard data. ${e?.message ?? "Please try again."}`);
+      }
+    },
   });
 
   const nominations = data?.nominations ?? [];
   const positions = data?.positions ?? [];
   const elections = data?.elections ?? [];
   const myVotedElections = new Set((data?.myVotes ?? []).map((v) => v.election_id));
+
+  const formatDate = (value?: string | null) => {
+    if (!value) return "TBD";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "TBD" : format(date, "PP p");
+  };
 
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   useEffect(() => {
@@ -125,7 +139,7 @@ function Dashboard() {
                   <div>
                     <div className="font-medium">{e.title}</div>
                     <div className="text-xs text-muted-foreground">
-                      {format(new Date(e.starts_at), "PP p")} → {format(new Date(e.ends_at), "PP p")}
+                      {formatDate(e.starts_at)} → {formatDate(e.ends_at)}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
