@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   ShieldCheck, Vote, Eye, Clock, Trophy, Users,
   CheckCircle2, Lock, Fingerprint, Smartphone, BarChart3,
@@ -11,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
+import { getPublicStats } from "@/lib/api/public.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -26,21 +27,12 @@ export const Route = createFileRoute("/")({
 });
 
 function useStats() {
+  const getStats = useServerFn(getPublicStats);
+
   return useQuery({
     queryKey: ["public-stats"],
-    queryFn: async () => {
-      const [el, ca, vo] = await Promise.all([
-        supabase.from("elections").select("id,status", { count: "exact", head: false }),
-        supabase.from("candidates").select("id", { count: "exact", head: true }).eq("approved", true),
-        supabase.from("votes").select("id", { count: "exact", head: true }),
-      ]);
-      return {
-        elections: el.data?.length ?? 0,
-        active: el.data?.filter((e) => e.status === "active").length ?? 0,
-        candidates: ca.count ?? 0,
-        votes: vo.count ?? 0,
-      };
-    },
+    queryFn: getStats,
+    staleTime: 1000 * 60 * 5,
   });
 }
 
