@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/admin/candidates")({
 
 function AdminCandidates() {
   const qc = useQueryClient();
-  const { data } = useQuery({
+  const { data } = useQuery<any, any>({
     queryKey: ["admin-candidates"],
     queryFn: async () => {
       const [{ data: elections }, { data: positions }, { data: candidates }] = await Promise.all([
@@ -45,7 +45,7 @@ function AdminCandidates() {
         toast.error(e?.message ?? "Failed to load candidates");
       }
     },
-  });
+  } as any);
 
   const [viewing, setViewing] = useState<any | null>(null);
 
@@ -109,22 +109,25 @@ function AdminCandidates() {
     onSuccess: () => { qc.invalidateQueries(); toast.success("Position removed"); },
   });
 
-  const elections = data?.elections ?? [];
-  const filteredPositions = (data?.positions ?? []).filter((p) => !electionId || p.election_id === electionId);
+  const elections = (data?.elections ?? []) as any[];
+  const positions = (data?.positions ?? []) as any[];
+  const candidates = (data?.candidates ?? []) as any[];
+  const profiles = (data?.profiles ?? []) as any[];
+  const filteredPositions = positions.filter((p: any) => !electionId || p.election_id === electionId);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function handleCsvImport(file: File) {
     if (!electionId) { toast.error("Choose an election first to import into."); return; }
     try {
       const rows = await parseCSV<{ position_title?: string; full_name?: string; manifesto?: string }>(file);
-      const positionsForElection = (data?.positions ?? []).filter((p) => p.election_id === electionId);
+      const positionsForElection = positions.filter((p: any) => p.election_id === electionId);
       const toInsert: { position_id: string; full_name: string; manifesto: string | null; approved: boolean }[] = [];
       const unknown: string[] = [];
       for (const r of rows) {
         const title = (r.position_title ?? "").trim();
         const name = (r.full_name ?? "").trim();
         if (!title || !name) continue;
-        const pos = positionsForElection.find((p) => p.title.toLowerCase() === title.toLowerCase());
+        const pos = positionsForElection.find((p: any) => p.title.toLowerCase() === title.toLowerCase());
         if (!pos) { unknown.push(title); continue; }
         toInsert.push({ position_id: pos.id, full_name: name, manifesto: r.manifesto?.trim() || null, approved: true });
       }
@@ -148,7 +151,7 @@ function AdminCandidates() {
               <SelectTrigger><SelectValue placeholder="Filter by election" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All elections</SelectItem>
-                {elections.map((e) => <SelectItem key={e.id} value={e.id}>{e.title}</SelectItem>)}
+                    {elections.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.title}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -178,10 +181,10 @@ function AdminCandidates() {
                 <div className="space-y-2">
                   <Label>Position</Label>
                   <select name="position_id" required className="h-10 w-full rounded-md border bg-background px-3 text-sm">
-                    {(data?.positions ?? []).map((p) => {
-                      const el = elections.find((e) => e.id === p.election_id);
-                      return <option key={p.id} value={p.id}>{el?.title} — {p.title}</option>;
-                    })}
+                    {positions.map((p: any) => {
+                          const el = elections.find((e: any) => e.id === p.election_id);
+                          return <option key={p.id} value={p.id}>{el?.title} — {p.title}</option>;
+                        })}
                   </select>
                 </div>
                 <div className="space-y-2"><Label>Full name</Label><Input name="full_name" required /></div>
@@ -198,9 +201,9 @@ function AdminCandidates() {
       </div>
 
       {(() => {
-        const pending = (data?.candidates ?? []).filter((c) =>
+        const pending = candidates.filter((c: any) =>
           c.status === "pending" &&
-          (!electionId || (data?.positions ?? []).find((p) => p.id === c.position_id)?.election_id === electionId)
+          (!electionId || positions.find((p: any) => p.id === c.position_id)?.election_id === electionId)
         );
         if (pending.length === 0) return null;
         return (
@@ -212,9 +215,9 @@ function AdminCandidates() {
             </CardHeader>
             <CardContent className="space-y-3">
               {pending.map((c) => {
-                const pos = (data?.positions ?? []).find((p) => p.id === c.position_id);
-                const el = elections.find((e) => e.id === pos?.election_id);
-                const prof = (data?.profiles ?? []).find((p: any) => p.id === c.user_id);
+                const pos = positions.find((p: any) => p.id === c.position_id);
+                const el = elections.find((e: any) => e.id === pos?.election_id);
+                const prof = profiles.find((p: any) => p.id === c.user_id);
                 return (
                   <div key={c.id} className="rounded-lg border p-3">
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -265,7 +268,7 @@ function AdminCandidates() {
       <div className="space-y-6">
         {filteredPositions.map((p) => {
           const el = elections.find((e) => e.id === p.election_id);
-          const cands = (data?.candidates ?? []).filter((c) => c.position_id === p.id && c.status !== "pending");
+          const cands = candidates.filter((c: any) => c.position_id === p.id && c.status !== "pending");
           return (
             <Card key={p.id}>
               <CardHeader>
@@ -281,7 +284,7 @@ function AdminCandidates() {
               </CardHeader>
               <CardContent className="grid gap-2 md:grid-cols-2">
                 {cands.length === 0 && <p className="text-sm text-muted-foreground">No candidates.</p>}
-                {cands.map((c) => (
+                {cands.map((c: any) => (
                   <div key={c.id} className="flex items-start justify-between gap-2 rounded-lg border p-3">
                     <div>
                       <div className="font-medium">{c.full_name}</div>
@@ -311,9 +314,9 @@ function AdminCandidates() {
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle>Nomination details</DialogTitle></DialogHeader>
           {viewing && (() => {
-            const pos = (data?.positions ?? []).find((p) => p.id === viewing.position_id);
-            const el = elections.find((e) => e.id === pos?.election_id);
-            const prof = (data?.profiles ?? []).find((p: any) => p.id === viewing.user_id);
+            const pos = positions.find((p: any) => p.id === viewing.position_id);
+            const el = elections.find((e: any) => e.id === pos?.election_id);
+            const prof = profiles.find((p: any) => p.id === viewing.user_id);
             return (
               <div className="space-y-4">
                 <div className="flex gap-4">

@@ -23,7 +23,7 @@ function NominatePage() {
   const { user } = useAuth();
   const qc = useQueryClient();
 
-  const { data } = useQuery({
+  const { data } = useQuery<any, any>({
     queryKey: ["nominate-data", user?.id],
     enabled: !!user,
     queryFn: async () => {
@@ -46,7 +46,7 @@ function NominatePage() {
         toast.error("Unable to load nominations — access denied. Check your Supabase RLS policy or your login state.");
       }
     },
-  });
+  } as any);
 
   const [electionId, setElectionId] = useState("");
   const [positionId, setPositionId] = useState("");
@@ -81,19 +81,21 @@ function NominatePage() {
     }
   };
 
-  const elections = data?.elections ?? [];
-  const positionsForElection = (data?.positions ?? []).filter((p) => p.election_id === electionId);
-  const mine = data?.mine ?? [];
+  const elections = (data?.elections ?? []) as any[];
+  const positions = (data?.positions ?? []) as any[];
+  const positionsForElection = positions.filter((p: any) => p.election_id === electionId);
+  const mine = (data?.mine ?? []) as any[];
+  const profile = data?.profile as any | null;
 
   const submit = useMutation({
     mutationFn: async () => {
       if (!positionId) throw new Error("Choose a position");
-      const name = fullName.trim() || data?.profile?.full_name?.trim() || "";
+      const name = fullName.trim() || profile?.full_name?.trim() || "";
       if (!name) throw new Error("Please add your full name");
       if (manifesto.trim().length < 20) throw new Error("Manifesto must be at least 20 characters");
 
       // Prevent duplicate submission for the same position
-      const existing = (data?.mine ?? []).find((c) => c.position_id === positionId);
+      const existing = mine.find((c: any) => c.position_id === positionId);
       if (existing) {
         if (existing.status === "pending") throw new Error("You already have a pending nomination for this position. Withdraw it before submitting a new one.");
         if (existing.status === "approved") throw new Error("You are already an approved candidate for this position.");
@@ -152,9 +154,9 @@ function NominatePage() {
                   <Select value={electionId} onValueChange={(v) => { setElectionId(v); setPositionId(""); }}>
                     <SelectTrigger><SelectValue placeholder="Select an election" /></SelectTrigger>
                     <SelectContent>
-                      {elections.map((e) => (
-                        <SelectItem key={e.id} value={e.id}>{e.title} ({e.status})</SelectItem>
-                      ))}
+                          {elections.map((e: any) => (
+                            <SelectItem key={e.id} value={e.id}>{e.title} ({e.status})</SelectItem>
+                          ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -165,7 +167,7 @@ function NominatePage() {
                     <SelectTrigger><SelectValue placeholder={electionId ? "Select a position" : "Choose election first"} /></SelectTrigger>
                     <SelectContent>
                       {positionsForElection.length === 0 && <div className="px-2 py-1.5 text-sm text-muted-foreground">No positions in this election yet.</div>}
-                      {positionsForElection.map((p) => (
+                      {positionsForElection.map((p: any) => (
                         <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
                       ))}
                     </SelectContent>
@@ -177,7 +179,7 @@ function NominatePage() {
                   <Input
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder={data?.profile?.full_name || "Your full name"}
+                    placeholder={profile?.full_name || "Your full name"}
                   />
                 </div>
 
@@ -241,7 +243,7 @@ function NominatePage() {
           <CardContent className="space-y-3">
             {mine.length === 0 && <p className="text-sm text-muted-foreground">You haven't submitted any nominations yet.</p>}
             {mine.map((c) => {
-              const pos = (data?.positions ?? []).find((p) => p.id === c.position_id);
+              const pos = positions.find((p: any) => p.id === c.position_id);
               const el = elections.find((e) => e.id === pos?.election_id);
               const Icon = c.status === "approved" ? CheckCircle2 : c.status === "rejected" ? XCircle : Clock;
               const variant: any = c.status === "approved" ? "default" : c.status === "rejected" ? "destructive" : "secondary";

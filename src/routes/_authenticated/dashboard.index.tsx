@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/")({
 function Dashboard() {
   const { user } = useAuth();
 
-  const { data } = useQuery({
+  const { data } = useQuery<any, any>({
     queryKey: ["student-overview", user?.id],
     enabled: !!user,
     queryFn: async () => {
@@ -39,12 +39,12 @@ function Dashboard() {
         toast.error(`Unable to load dashboard data. ${e?.message ?? "Please try again."}`);
       }
     },
-  });
+  } as any);
 
-  const nominations = data?.nominations ?? [];
-  const positions = data?.positions ?? [];
-  const elections = data?.elections ?? [];
-  const myVotedElections = new Set((data?.myVotes ?? []).map((v) => v.election_id));
+  const nominations = (data?.nominations ?? []) as any[];
+  const positions = (data?.positions ?? []) as any[];
+  const elections = (data?.elections ?? []) as any[];
+  const myVotedElections = new Set((data?.myVotes ?? []).map((v: any) => v.election_id));
 
   const formatDate = (value?: string | null) => {
     if (!value) return "TBD";
@@ -64,7 +64,7 @@ function Dashboard() {
     setDismissed(next);
     try { localStorage.setItem(`nom-seen-${user?.id}`, JSON.stringify([...next])); } catch {}
   };
-  const visibleNominations = nominations.filter((n) => !dismissed.has(n.id));
+  const visibleNominations = nominations.filter((n: any) => !dismissed.has(n.id));
 
   return (
     <AppShell variant="student">
@@ -75,8 +75,8 @@ function Dashboard() {
 
       {visibleNominations.length > 0 && (
         <div className="mb-6 space-y-3">
-          {visibleNominations.map((n) => {
-            const pos = positions.find((p) => p.id === n.position_id);
+          {visibleNominations.map((n: any) => {
+            const pos = positions.find((p: any) => p.id === n.position_id);
             const approved = n.status === "approved";
             return (
               <Card key={n.id} className={approved ? "border-success/40 bg-success/5" : "border-destructive/40 bg-destructive/5"}>
@@ -107,10 +107,10 @@ function Dashboard() {
 
       <div className="grid gap-4 md:grid-cols-3">
         {[
-          { label: "Active elections", value: elections.filter((e) => e.status === "active").length, icon: Clock },
-          { label: "Scheduled", value: elections.filter((e) => e.status === "scheduled").length, icon: Vote },
-          { label: "My votes cast", value: data?.myVotes.length ?? 0, icon: CheckCircle2 },
-        ].map((s) => (
+          { label: "Active elections", value: elections.filter((e: any) => e.status === "active").length, icon: Clock },
+          { label: "Scheduled", value: elections.filter((e: any) => e.status === "scheduled").length, icon: Vote },
+          { label: "My votes cast", value: (data?.myVotes ?? []).length ?? 0, icon: CheckCircle2 },
+        ].map((s: any) => (
           <Card key={s.label}>
             <CardContent className="flex items-center gap-4 p-6">
               <div className="grid h-12 w-12 place-items-center rounded-lg gradient-navy text-primary-foreground">
@@ -132,7 +132,7 @@ function Dashboard() {
           </CardHeader>
           <CardContent className="space-y-3">
             {elections.length === 0 && <p className="text-sm text-muted-foreground">No active or scheduled elections right now.</p>}
-            {elections.map((e) => {
+            {elections.map((e: any) => {
               const voted = myVotedElections.has(e.id);
               return (
                 <div key={e.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4">
