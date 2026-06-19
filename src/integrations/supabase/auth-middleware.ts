@@ -6,13 +6,18 @@ import type { Database } from './types'
 
 
 
+function normalizeEnvValue(value?: string) {
+  if (!value) return undefined;
+  return value.replace(/^['"]|['"]$/g, '');
+}
+
 export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
     
-    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_URL = normalizeEnvValue(process.env.SUPABASE_URL);
     const SUPABASE_PUBLISHABLE_KEY =
-      process.env.SUPABASE_PUBLISHABLE_KEY ||
-      process.env.SUPABASE_KEY;
+      normalizeEnvValue(process.env.SUPABASE_PUBLISHABLE_KEY) ||
+      normalizeEnvValue(process.env.SUPABASE_KEY);
 
     if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
       const missing = [
