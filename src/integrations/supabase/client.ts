@@ -27,6 +27,15 @@ function createSupabaseClient() {
     throw new Error(message);
   }
 
+  // Debug: show which URL/key is being used in the browser console (masked key)
+  if (typeof window !== 'undefined') {
+    try {
+      const maskedKey = SUPABASE_PUBLISHABLE_KEY ? `${SUPABASE_PUBLISHABLE_KEY.slice(0, 6)}…` : 'MISSING';
+      // eslint-disable-next-line no-console
+      console.debug(`[Supabase] URL=${SUPABASE_URL} PUBLISHABLE_KEY=${maskedKey}`);
+    } catch {}
+  }
+
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
       storage: typeof window !== 'undefined' ? localStorage : undefined,
