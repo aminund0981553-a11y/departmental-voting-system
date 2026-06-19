@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Trash2, Upload, Eye, CheckCircle2, XCircle } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
@@ -13,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { getAdminCandidates } from "@/lib/admin.functions";
 import { parseCSV } from "@/lib/export-utils";
 
 export const Route = createFileRoute("/_authenticated/admin/candidates")({
@@ -21,31 +23,25 @@ export const Route = createFileRoute("/_authenticated/admin/candidates")({
 
 function AdminCandidates() {
   const qc = useQueryClient();
-  const { data } = useQuery<any, any>({
+  const fetchAdminCandidates = useServerFn(getAdminCandidates);
+  const { data, error } = useQuery<{
+    elections: any[];
+    positions: any[];
+    candidates: any[];
+    profiles: any[];
+  }, any>({
     queryKey: ["admin-candidates"],
-    queryFn: async () => {
-      const [{ data: elections }, { data: positions }, { data: candidates }] = await Promise.all([
-        supabase.from("elections").select("id,title").order("created_at", { ascending: false }),
-        supabase.from("positions").select("*").order("display_order"),
-        supabase.from("candidates").select("*").order("submitted_at", { ascending: false, nullsFirst: false }),
-      ]);
-      const userIds = Array.from(new Set((candidates ?? []).map((c: any) => c.user_id).filter(Boolean)));
-      let profiles: any[] = [];
-      if (userIds.length) {
-        const { data: ps } = await supabase.from("profiles").select("id,full_name,reg_number,department,level,gender,phone").in("id", userIds);
-        profiles = ps ?? [];
-      }
-      return { elections: elections ?? [], positions: positions ?? [], candidates: candidates ?? [], profiles };
-    },
-    onError: (e: any) => {
-      // Surface auth / RLS problems clearly in the UI
-      if (e?.status === 403) {
-        toast.error("Access denied when loading candidates. Are you signed in? Check Supabase RLS policies.");
-      } else {
-        toast.error(e?.message ?? "Failed to load candidates");
-      }
-    },
-  } as any);
+    queryFn: async () => await fetchAdminCandidates(),
+  });
+
+  useEffect(() => {
+    if (!error) return;
+    if (error?.status === 403 || error?.message?.includes("Unauthorized")) {
+      toast.error("Access denied when loading candidates. Are you signed in as an administrator?");
+    } else {
+      toast.error(error?.message ?? "Failed to load candidates");
+    }
+  }, [error]);
 
   const [viewing, setViewing] = useState<any | null>(null);
 
