@@ -29,10 +29,10 @@ export const getAdminCandidates = createServerFn({ method: "POST" })
       throw new Error(electionsError?.message || positionsError?.message || candidatesError?.message || "Failed to load admin candidate data.");
     }
 
-    const userIds = Array.from(new Set((candidates ?? []).map((c: any) => c.user_id).filter(Boolean)));
+    const candidateRows = (candidates ?? []) as any[];
+    const userIds = Array.from(new Set(candidateRows.map((c: any) => c.user_id).filter(Boolean))) as string[];
     let profiles: any[] = [];
     if (userIds.length) {
-      const { data: profileData, error: profileError } = await supabaseAdmin
       const { data: profileData, error: profileError } = await context.supabase
         .from("profiles")
         .select("id,full_name,reg_number,department,level,gender,phone")
@@ -44,7 +44,7 @@ export const getAdminCandidates = createServerFn({ method: "POST" })
     return {
       elections: elections ?? [],
       positions: positions ?? [],
-      candidates: candidates ?? [],
+      candidates: candidateRows,
       profiles,
     };
   });
