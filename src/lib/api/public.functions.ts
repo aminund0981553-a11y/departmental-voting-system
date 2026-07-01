@@ -4,10 +4,10 @@ import type { Database } from "@/integrations/supabase/types";
 
 export const getPublicStats = createServerFn({ method: "POST" }).handler(async () => {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY;
 
   if (!url || !key) {
-    throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY on the server.");
+    return { elections: 0, active: 0, candidates: 0, votes: 0 };
   }
 
   const supabase = createClient<Database>(url, key, {
@@ -15,16 +15,10 @@ export const getPublicStats = createServerFn({ method: "POST" }).handler(async (
   });
 
   const [elections, candidates, votes] = await Promise.all([
-    supabase.from("elections").select("id,status", { count: "exact", head: false }),
+    supabase.from("elections").select("id,status"),
     supabase.from("candidates").select("id", { count: "exact", head: true }).eq("approved", true),
     supabase.from("votes").select("id", { count: "exact", head: true }),
   ]);
-
-  if (elections.error || candidates.error || votes.error) {
-    throw new Error(
-      elections.error?.message || candidates.error?.message || votes.error?.message || "Failed to load public stats."
-    );
-  }
 
   return {
     elections: elections.data?.length ?? 0,
