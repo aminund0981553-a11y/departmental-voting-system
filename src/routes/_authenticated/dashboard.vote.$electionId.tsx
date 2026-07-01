@@ -70,7 +70,8 @@ function VoteFlow() {
     );
   }
 
-  const openPositions = positions.filter((p) => !votedPositions.has(p.id));
+  const votedSet = votedPositions instanceof Set ? votedPositions : new Set<string>(votedPositions as string[]);
+  const openPositions = positions.filter((p) => !votedSet.has(p.id));
   const allChosen = openPositions.every((p) => selections[p.id]);
 
   if (receipts) {
