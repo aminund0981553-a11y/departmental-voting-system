@@ -81,7 +81,7 @@ const checkAdminAccess = async (supabaseAdmin: any, userId: string) => {
 };
 
 export const createPosition = createServerFn({ method: "POST" })
-  .validator((data: { election_id: string; title: string; description?: string; display_order?: number }) => data)
+  .inputValidator((data: { election_id: string; title: string; description?: string; display_order?: number }) => data)
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -97,7 +97,7 @@ export const createPosition = createServerFn({ method: "POST" })
   });
 
 export const createCandidate = createServerFn({ method: "POST" })
-  .validator((data: { position_id: string; full_name: string; manifesto?: string; approved?: boolean }) => data)
+  .inputValidator((data: { position_id: string; full_name: string; manifesto?: string; approved?: boolean }) => data)
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -114,7 +114,7 @@ export const createCandidate = createServerFn({ method: "POST" })
   });
 
 export const updateCandidate = createServerFn({ method: "POST" })
-  .validator((data: { id: string; approved?: boolean; reject_reason?: string }) => data)
+  .inputValidator((data: { id: string; approved?: boolean; reject_reason?: string }) => data)
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -133,7 +133,7 @@ export const updateCandidate = createServerFn({ method: "POST" })
   });
 
 export const deleteCandidate = createServerFn({ method: "POST" })
-  .validator((data: { id: string }) => data)
+  .inputValidator((data: { id: string }) => data)
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -144,7 +144,7 @@ export const deleteCandidate = createServerFn({ method: "POST" })
   });
 
 export const deletePosition = createServerFn({ method: "POST" })
-  .validator((data: { id: string }) => data)
+  .inputValidator((data: { id: string }) => data)
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -155,7 +155,7 @@ export const deletePosition = createServerFn({ method: "POST" })
   });
 
 export const createCandidatesBatch = createServerFn({ method: "POST" })
-  .validator((data: { candidates: Array<{ position_id: string; full_name: string; manifesto: string | null; approved: boolean }> }) => data)
+  .inputValidator((data: { candidates: Array<{ position_id: string; full_name: string; manifesto: string | null; approved: boolean }> }) => data)
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
