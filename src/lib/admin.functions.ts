@@ -8,43 +8,21 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const claimFirstAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { count, error: countErr } = await supabaseAdmin
-      .from("user_roles")
-      .select("id", { count: "exact", head: true })
-      .eq("role", "admin");
-    if (countErr) throw new Error(countErr.message);
-    if ((count ?? 0) > 0) {
-      return { ok: false, message: "An admin already exists." };
-    }
-    const { error } = await supabaseAdmin
-      .from("user_roles")
-      .insert({ user_id: context.userId, role: "admin" });
+    const { data, error } = await context.supabase.rpc("claim_first_admin" as any);
     if (error) throw new Error(error.message);
-    return { ok: true, message: "You are now the administrator." };
+    return data as { ok: boolean; message: string };
   });
 
 export const getAdminCandidates = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const { count, error: roleError } = await supabaseAdmin
-      .from("user_roles")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", context.userId)
-      .eq("role", "admin");
-
-    if (roleError) throw new Error(roleError.message);
-    if ((count ?? 0) === 0) {
-      throw new Error("Unauthorized: admin access required.");
-    }
+    await checkAdminAccess(context.supabase, context.userId);
 
     const [{ data: elections, error: electionsError }, { data: positions, error: positionsError }, { data: candidates, error: candidatesError }] =
       await Promise.all([
-        supabaseAdmin.from("elections").select("id,title").order("created_at", { ascending: false }),
-        supabaseAdmin.from("positions").select("*").order("display_order"),
-        supabaseAdmin.from("candidates").select("*").order("submitted_at", { ascending: false, nullsFirst: false }),
+        context.supabase.from("elections").select("id,title").order("created_at", { ascending: false }),
+        context.supabase.from("positions").select("*").order("display_order"),
+        context.supabase.rpc("get_admin_candidates" as any),
       ]);
 
     if (electionsError || positionsError || candidatesError) {
@@ -55,6 +33,7 @@ export const getAdminCandidates = createServerFn({ method: "POST" })
     let profiles: any[] = [];
     if (userIds.length) {
       const { data: profileData, error: profileError } = await supabaseAdmin
+      const { data: profileData, error: profileError } = await context.supabase
         .from("profiles")
         .select("id,full_name,reg_number,department,level,gender,phone")
         .in("id", userIds);
@@ -70,8 +49,8 @@ export const getAdminCandidates = createServerFn({ method: "POST" })
     };
   });
 
-const checkAdminAccess = async (supabaseAdmin: any, userId: string) => {
-  const { count, error } = await supabaseAdmin
+const checkAdminAccess = async (supabaseClient: any, userId: string) => {
+  const { count, error } = await supabaseClient
     .from("user_roles")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
@@ -84,9 +63,8 @@ export const createPosition = createServerFn({ method: "POST" })
   .inputValidator((data: { election_id: string; title: string; description?: string; display_order?: number }) => data)
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await checkAdminAccess(supabaseAdmin, context.userId);
-    const { error } = await supabaseAdmin.from("positions").insert({
+    await checkAdminAccess(context.supabase, context.userId);
+    const { error } = await context.supabase.from("positions").insert({
       election_id: data.election_id,
       title: data.title,
       description: data.description || null,
@@ -100,9 +78,8 @@ export const createCandidate = createServerFn({ method: "POST" })
   .inputValidator((data: { position_id: string; full_name: string; manifesto?: string; approved?: boolean }) => data)
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await checkAdminAccess(supabaseAdmin, context.userId);
-    const { error } = await supabaseAdmin.from("candidates").insert({
+    await checkAdminAccess(context.supabase, context.userId);
+    const { error } = await context.supabase.from("candidates").insert({
       position_id: data.position_id,
       full_name: data.full_name,
       manifesto: data.manifesto || null,
@@ -117,18 +94,14 @@ export const updateCandidate = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string; approved?: boolean; reject_reason?: string }) => data)
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await checkAdminAccess(supabaseAdmin, context.userId);
-    const updateData: any = {};
     if (data.approved !== undefined) {
-      updateData.approved = data.approved;
-      updateData.status = data.approved ? "approved" : "rejected";
+      const { error } = await context.supabase.rpc("admin_update_candidate_status" as any, {
+        _candidate_id: data.id,
+        _approved: data.approved,
+        _reject_reason: data.reject_reason ?? null,
+      });
+      if (error) throw new Error(error.message);
     }
-    if (data.reject_reason !== undefined) {
-      updateData.reject_reason = data.reject_reason;
-    }
-    const { error } = await supabaseAdmin.from("candidates").update(updateData).eq("id", data.id);
-    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
@@ -136,9 +109,7 @@ export const deleteCandidate = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => data)
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await checkAdminAccess(supabaseAdmin, context.userId);
-    const { error } = await supabaseAdmin.from("candidates").delete().eq("id", data.id);
+    const { error } = await context.supabase.rpc("admin_delete_candidate" as any, { _candidate_id: data.id });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -147,9 +118,8 @@ export const deletePosition = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => data)
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await checkAdminAccess(supabaseAdmin, context.userId);
-    const { error } = await supabaseAdmin.from("positions").delete().eq("id", data.id);
+    await checkAdminAccess(context.supabase, context.userId);
+    const { error } = await context.supabase.from("positions").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -158,9 +128,8 @@ export const createCandidatesBatch = createServerFn({ method: "POST" })
   .inputValidator((data: { candidates: Array<{ position_id: string; full_name: string; manifesto: string | null; approved: boolean }> }) => data)
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await checkAdminAccess(supabaseAdmin, context.userId);
-    const { error } = await supabaseAdmin.from("candidates").insert(
+    await checkAdminAccess(context.supabase, context.userId);
+    const { error } = await context.supabase.from("candidates").insert(
       data.candidates.map((c) => ({
         position_id: c.position_id,
         full_name: c.full_name,
