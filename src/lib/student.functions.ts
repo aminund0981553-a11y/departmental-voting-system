@@ -59,7 +59,7 @@ export const getNominatePageData = createServerFn({ method: "POST" })
   });
 
 export const submitNomination = createServerFn({ method: "POST" })
-  .validator((data: { position_id: string; full_name: string; manifesto: string; photo_url: string | null }) => data)
+  .inputValidator((data: { position_id: string; full_name: string; manifesto: string; photo_url: string | null }) => data)
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
     const userId = context.userId;
@@ -87,7 +87,7 @@ export const submitNomination = createServerFn({ method: "POST" })
   });
 
 export const withdrawNomination = createServerFn({ method: "POST" })
-  .validator((data: { id: string }) => data)
+  .inputValidator((data: { id: string }) => data)
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
     const userId = context.userId;
@@ -98,7 +98,7 @@ export const withdrawNomination = createServerFn({ method: "POST" })
   });
 
 export const getVoteBallotData = createServerFn({ method: "POST" })
-  .validator((data: { electionId: string }) => data)
+  .inputValidator((data: { electionId: string }) => data)
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
     const userId = context.userId;
@@ -127,7 +127,7 @@ export const getVoteBallotData = createServerFn({ method: "POST" })
   });
 
 export const submitVote = createServerFn({ method: "POST" })
-  .validator((data: { electionId: string; rows: Array<{ election_id: string; position_id: string; candidate_id: string; voter_id: string }> }) => data)
+  .inputValidator((data: { electionId: string; rows: Array<{ election_id: string; position_id: string; candidate_id: string; voter_id: string }> }) => data)
   .middleware([requireSupabaseAuth])
   .handler(async ({ context, data }) => {
     const userId = context.userId;
