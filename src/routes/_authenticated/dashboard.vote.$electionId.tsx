@@ -54,7 +54,12 @@ function VoteFlow() {
   });
 
   if (isLoading || !data) return <AppShell variant="student"><div>Loading ballot…</div></AppShell>;
-  const { election, positions, candidates, votedPositions } = data;
+  const { election, positions, candidates, votedPositions } = data as {
+    election: { id: string; title: string; status: string };
+    positions: Array<{ id: string; title: string }>;
+    candidates: Array<{ id: string; full_name: string; manifesto?: string | null; position_id: string }>;
+    votedPositions: Set<string> | string[];
+  };
 
   if (!election) return <AppShell variant="student"><p>Election not found.</p></AppShell>;
   if (election.status !== "active") {
