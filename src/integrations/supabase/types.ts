@@ -279,6 +279,35 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_candidate: {
+        Args: { _candidate_id: string }
+        Returns: undefined
+      }
+      admin_update_candidate_status: {
+        Args: {
+          _approved: boolean
+          _candidate_id: string
+          _reject_reason?: string
+        }
+        Returns: undefined
+      }
+      claim_first_admin: { Args: never; Returns: Json }
+      get_admin_candidates: {
+        Args: never
+        Returns: {
+          approved: boolean
+          created_at: string
+          full_name: string
+          id: string
+          manifesto: string
+          photo_url: string
+          position_id: string
+          reject_reason: string
+          status: string
+          submitted_at: string
+          user_id: string
+        }[]
+      }
       get_election_tallies: {
         Args: { _election_id: string }
         Returns: {
